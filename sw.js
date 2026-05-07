@@ -1,7 +1,7 @@
 // Service Worker — offline-first static asset caching
 // Cache name is versioned; bump CACHE_VERSION on deploy to force update.
 
-const CACHE_VERSION = 'ww-v31';
+const CACHE_VERSION = 'ww-v32';
 
 const STATIC_ASSETS = [
   './',
