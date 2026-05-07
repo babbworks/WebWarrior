@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data:;">
+  <title>Webwarrior</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Webwarrior additions */
+    .profile-create-row { display:flex; gap:6px; align-items:center; padding:10px 12px; background:var(--bg); border-bottom:1px solid var(--border); }
+    .profile-create-row input { flex:1; min-width:0; }
+    .import-panel { padding:10px; }
+    .import-panel p { color:var(--muted); font-size:12px; margin-bottom:10px; line-height:1.6; }
+    .import-progress { margin-top:10px; font-size:11px; color:var(--muted); }
+    .import-progress .import-line { padding:2px 0; }
+    .import-progress .import-ok { color:var(--success); }
+    .import-progress .import-err { color:var(--error); }
+    .conn-dot.connected { background:var(--success) !important; }
+    #section-import .service-panel-body { padding:0; }
+    .ww-offline-badge { font-size:10px; color:var(--success); padding:2px 7px; border:1px solid var(--success); border-radius:3px; opacity:0.7; }
+    /* profile management in profile section */
+    .profile-list-item { display:flex; align-items:center; gap:8px; padding:6px 10px; border-bottom:1px solid var(--border); }
+    .profile-list-item.active-profile { border-left:3px solid var(--accent); padding-left:7px; }
+    .profile-list-name { flex:1; font-size:12px; }
+    .profile-list-stats { font-size:11px; color:var(--muted); }
+    .profile-list-actions { display:flex; gap:4px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <span class="wordmark-ww" id="btn-nav-warrior">ww</span>
+        <span class="wordmark-full">webwarrior</span>
+      </div>
+      <div class="profile-row">
+        <div class="profile-pill" id="profile-pill">—</div>
+        <button class="profile-info-btn" id="btn-profile-screen" title="Profile info">P</button>
+        <ul class="profile-switcher hidden" id="profile-switcher"></ul>
+      </div>
+      <div class="cmd-ctrl-row">
+        <button class="cmd-ctrl-btn" id="btn-nav-import" data-section="import" title="Import from ww folder">IMPORT</button>
+        <button class="cmd-ctrl-btn" id="btn-nav-ctrl" data-section="ctrl" title="CTRL — settings">CTRL</button>
+      </div>
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-group-label">functions</div>
+        <button class="nav-item active" data-section="tasks"><span class="nav-icon icon-tasks">∼</span><span class="nav-label">Tasks</span></button>
+        <button class="nav-item" data-section="time"><span class="nav-icon icon-time">⭕</span><span class="nav-label">Times</span></button>
+        <button class="nav-item" data-section="journal"><span class="nav-icon icon-journal">╱</span><span class="nav-label">Journals</span></button>
+        <button class="nav-item" data-section="ledger"><span class="nav-icon icon-ledger">═</span><span class="nav-label">Ledgers</span></button>
+        <button class="nav-item" data-section="lists"><span class="nav-icon">•</span><span class="nav-label">Lists</span></button>
+        <button class="nav-item" data-section="tags"><span class="nav-icon">⌗</span><span class="nav-label">Tags</span></button>
+        <div class="nav-divider"></div>
+        <div class="nav-group-label">workspace</div>
+        <button class="nav-item" data-section="next"><span class="nav-icon">▶</span><span class="nav-label">Next</span></button>
+        <button class="nav-item" data-section="warrior"><span class="nav-icon">✱</span><span class="nav-label">Warrior</span></button>
+        <button class="nav-item" data-section="community"><span class="nav-icon">◎</span><span class="nav-label">Community</span></button>
+        <button class="nav-item" data-section="questions"><span class="nav-icon">？</span><span class="nav-label">Questions</span></button>
+        <button class="nav-item" data-section="projects"><span class="nav-icon">◆</span><span class="nav-label">Projects</span></button>
+        <button class="nav-item" data-section="export"><span class="nav-icon">⤓</span><span class="nav-label">Export</span></button>
+      </nav>
+      <div class="sidebar-footer" id="sidebar-footer">
+        <div class="warrior-stats" id="warrior-stats">
+          <span class="warrior-icon">✱</span>
+          <span class="warrior-label" id="warrior-label">Webwarrior</span>
+          <span class="warrior-count" id="warrior-count"></span>
+        </div>
+        <div class="density-control">
+          <span class="density-label">density</span>
+          <div class="density-stops">
+            <button class="density-btn" data-density="compact" title="Compact">·</button>
+            <button class="density-btn active" data-density="normal" title="Normal">·</button>
+            <button class="density-btn" data-density="relaxed" title="Relaxed">·</button>
+          </div>
+        </div>
+        <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">‹</button>
+      </div>
+    </aside>
+    <button class="sidebar-peek" id="sidebar-peek" title="Open sidebar">›</button>
+    <div id="main">
+      <header id="content-header">
+        <div class="header-row1">
+          <div class="header-title-group">
+            <span id="section-title">Tasks</span>
+            <div id="header-resource-slot" class="header-resource-slot">
+
+              <!-- Tasks sub-list -->
+              <div class="resource-bar-inner hidden" data-resource-section="tasks">
+                <select id="task-list-select" class="resource-select" title="Task list"></select>
+                <button class="resource-add-btn" id="btn-new-task-list">+ list</button>
+                <button class="resource-add-btn resource-del-btn" id="btn-del-task-list" title="Remove this task list">✗</button>
+              </div>
+
+              <!-- Time sub-log -->
+              <div class="resource-bar-inner hidden" data-resource-section="time">
+                <select id="time-log-select" class="resource-select" title="Time log"></select>
+                <button class="resource-add-btn" id="btn-new-time-log">+ log</button>
+                <button class="resource-add-btn resource-del-btn" id="btn-del-time-log" title="Remove this time log">✗</button>
+              </div>
+
+              <!-- Journal -->
+              <div class="resource-bar-inner hidden" data-resource-section="journal">
+                <select id="journal-name-select" class="resource-select" title="Active journal"></select>
+                <button class="resource-add-btn" id="btn-new-journal">+ journal</button>
+              </div>
+
+              <!-- Ledger -->
+              <div class="resource-bar-inner hidden" data-resource-section="ledger">
+                <select id="ledger-name-select" class="resource-select" title="Active ledger"></select>
+                <button class="resource-add-btn" id="btn-new-ledger">+ ledger</button>
+              </div>
+
+              <!-- Lists -->
+              <div class="resource-bar-inner hidden" data-resource-section="lists">
+                <select id="list-name-select" class="resource-select" title="Active list"></select>
+                <button class="resource-add-btn" id="btn-new-list">+ list</button>
+                <button class="resource-add-btn resource-del-btn" id="btn-delete-list" title="Delete this list">✗</button>
+              </div>
+
+            </div>
+          </div>
+          <div class="header-stats">
+            <span id="stat-tasks-count" class="stat-item hidden"></span>
+            <span id="stat-time-today" class="stat-item hidden"></span>
+            <span id="stat-date" class="stat-item"></span>
+            <span id="header-profile" class="stat-item stat-profile" title="Switch profile">—</span>
+            <span class="ww-offline-badge">offline-ready</span>
+            <select id="journal-theme-select" class="header-theme-select" title="Journal theme">
+              <option value="default">default</option>
+              <option value="twain">Twain ✦</option>
+            </select>
+            <select id="global-mode-select" class="header-theme-select" title="Theme mode" disabled>
+              <option value="">—</option>
+            </select>
+            <button id="btn-sidebar-fullscreen" class="header-icon-btn" title="Collapse sidebar / expand view">⊞</button>
+          </div>
+        </div>
+      </header>
+      <div id="content-area">
+        <!-- Global search overlay -->
+        <div id="search-overlay" class="hidden">
+          <div id="search-results"></div>
+        </div>
+
+        <!-- Tasks -->
+        <section class="section" id="section-tasks">
+          <form class="add-form-inline" id="add-task-form">
+            <input type="text" name="description" placeholder="Add task…" autocomplete="off" />
+            <input type="text" name="project" placeholder="project" />
+            <input type="text" name="tags" placeholder="tags" />
+            <select name="priority"><option value="">pri</option><option>H</option><option>M</option><option>L</option></select>
+            <input type="date" name="due" title="due date" />
+            <input type="date" name="scheduled" title="scheduled date" />
+            <input type="date" name="wait" title="wait until" />
+            <button type="submit" class="btn-inline-submit">save</button>
+            <button type="button" class="btn-inline-alt" id="btn-task-start-new">start</button>
+          </form>
+          <div class="section-toolbar">
+            <input type="text" id="task-filter" class="inline-filter" placeholder="filter tasks…" />
+            <button class="btn-toolbar" id="btn-group-toggle" title="Group tasks by project">projects</button>
+            <button class="btn-toolbar" id="btn-show-done-tasks" title="Show completed tasks">done</button>
+            <button class="btn-toolbar" id="btn-ann-toggle" title="Toggle annotations">ann</button>
+          </div>
+          <div id="bulk-toolbar" class="hidden">
+            <label class="bulk-select-all"><input type="checkbox" id="bulk-select-all" /> all</label>
+            <span id="bulk-count">0 selected</span>
+            <button class="btn-bulk" data-op="done">✓ done</button>
+            <button class="btn-bulk" data-op="delete">✗ delete</button>
+            <span class="bulk-sep">|</span>
+            <input type="text" id="bulk-project-input" placeholder="set project…" class="bulk-input" />
+            <button class="btn-bulk" data-op="set-project">set proj</button>
+            <input type="text" id="bulk-tag-input" placeholder="tag…" class="bulk-input" />
+            <button class="btn-bulk" data-op="add-tag">+tag</button>
+            <button class="btn-bulk" data-op="remove-tag">-tag</button>
+            <select id="bulk-priority-select" class="bulk-input"><option value="">pri</option><option>H</option><option>M</option><option>L</option></select>
+            <button class="btn-bulk" data-op="set-priority">set pri</button>
+          </div>
+          <div class="task-list" id="task-list"><div class="skeleton-msg">Loading tasks…</div></div>
+          <div class="task-list hidden" id="task-done-list"></div>
+          <div class="task-detail hidden" id="task-detail"></div>
+        </section>
+
+        <!-- Times -->
+        <section class="section hidden" id="section-time">
+          <form class="add-form-inline" id="add-time-form">
+            <input type="text" name="tags" id="timew-tag-input" placeholder="tags (e.g. dev review)" autocomplete="off" style="width:200px" />
+            <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:140px" />
+            <input type="text" name="duration" placeholder="duration (e.g. 30min, 1h)" style="width:130px" />
+            <button type="button" class="btn-inline-submit" id="btn-timew-start">▶ start</button>
+            <button type="button" class="btn-inline-alt" id="btn-timew-stop">■ stop</button>
+            <button type="submit" class="btn-inline-alt" id="btn-timew-track">+ track</button>
+          </form>
+          <div class="time-today" id="time-today">Loading…</div>
+          <div class="time-week" id="time-week"></div>
+          <div class="time-tag-summary" id="time-tag-summary"></div>
+          <div class="time-filter-bar">
+            <input type="text" id="time-tag-filter" class="inline-filter" placeholder="filter by tag…" style="width:180px" autocomplete="off" />
+            <select id="time-date-range" class="resource-select" style="font-size:11px">
+              <option value="all">all time</option>
+              <option value="today">today</option>
+              <option value="week">this week</option>
+              <option value="month">this month</option>
+            </select>
+          </div>
+          <div class="time-intervals" id="time-intervals"></div>
+        </section>
+
+        <!-- Journals -->
+        <section class="section hidden" id="section-journal">
+          <span id="twain-datetime" class="twain-datetime"></span>
+          <form class="add-form-inline add-form-journal" id="add-journal-form">
+            <div class="twain-writing-wrap">
+              <textarea name="entry" id="journal-entry-textarea" placeholder="New journal entry… (Enter to submit, Shift+Enter for newline)" rows="3"></textarea>
+              <!-- Ink overlay: sections + tags floating on the parchment -->
+              <div id="twain-ink-panel" class="twain-ink-panel hidden">
+                <div class="twain-ink-group" id="twain-ink-sections-group">
+                  <span class="twain-ink-label">sections <button type="button" id="btn-collapse-sections" class="twain-ink-toggle" title="collapse">−</button></span>
+                  <div id="twain-section-list" class="twain-ink-sections"></div>
+                </div>
+                <div class="twain-ink-group" id="twain-ink-tags-group" style="margin-top:10px">
+                  <span class="twain-ink-label">tags <button type="button" id="btn-collapse-tags" class="twain-ink-toggle" title="collapse">−</button></span>
+                  <div id="twain-tag-list" class="twain-ink-tags"></div>
+                </div>
+              </div>
+              <div id="twain-status-bar" class="twain-status-bar">
+                <span id="twain-word-count" class="twain-status-text"></span>
+              </div>
+            </div>
+            <div class="journal-meta-row">
+              <input type="text" name="project" id="journal-project-input" class="journal-meta-input" placeholder="section" autocomplete="off" />
+              <input type="text" name="tags" id="journal-tags-input" class="journal-meta-input" placeholder="tags (comma-separated)" autocomplete="off" />
+              <select name="priority" id="journal-priority-select" class="journal-meta-select-sm">
+                <option value="">priority</option>
+                <option value="H">high</option>
+                <option value="M">medium</option>
+                <option value="L">low</option>
+              </select>
+              <label class="jrnl-enter-label" title="Enter key submits entry">
+                <input type="checkbox" id="jrnl-enter-toggle" checked style="display:none" />
+                <span class="jrnl-enter-indicator" id="jrnl-enter-indicator">↵</span>
+              </label>
+              <button type="submit" class="btn-inline-submit jrnl-add-btn">add</button>
+            </div>
+          </form>
+          <input type="text" id="journal-search" class="inline-filter" placeholder="search entries…" style="margin-bottom:8px;width:100%" />
+          <div class="journal-filter-bar">
+            <div class="jrnl-filter-tabs">
+              <button class="jrnl-filter-tab active" data-mode="all">All</button>
+              <button class="jrnl-filter-tab" data-mode="annotated">Annotated</button>
+              <button class="jrnl-filter-tab" data-mode="rejournaled">Rejournaled</button>
+            </div>
+            <div class="jrnl-filter-right">
+              <button class="journal-filter-btn jmd-toggle" id="journal-md-toggle" title="Toggle markdown rendering">⊞ MD</button>
+              <button class="journal-filter-btn" id="btn-journal-show-archived" title="Show archived entries"># archived</button>
+            </div>
+          </div>
+          <div class="journal-list" id="journal-list"><div class="skeleton-msg">Loading journal…</div></div>
+
+          <!-- Twain mode elements (hidden in default theme) -->
+          <div id="twain-scratch-col" class="twain-scratch-col hidden">
+            <div class="twain-scratch-header">
+              <span class="twain-scratch-label">scratch</span>
+              <button type="button" id="btn-scratch-expand" class="twain-scratch-toggle-btn" title="Expand to 3 columns">⇥</button>
+              <button type="button" id="btn-scratch-collapse" class="twain-scratch-toggle-btn" title="Collapse scratchpad">‹</button>
+            </div>
+            <div class="twain-scratch-cols">
+              <textarea id="twain-scratch" class="twain-scratch-textarea" placeholder="" spellcheck="false"></textarea>
+              <textarea id="twain-scratch-b" class="twain-scratch-textarea twain-scratch-extra hidden" placeholder="" spellcheck="false"></textarea>
+              <textarea id="twain-scratch-c" class="twain-scratch-textarea twain-scratch-extra hidden" placeholder="" spellcheck="false"></textarea>
+            </div>
+          </div>
+          <div id="twain-save-bar" class="twain-save-bar hidden">
+            <div class="twain-savebar-left">
+              <button type="button" id="btn-twain-save" class="twain-save-btn">save</button>
+              <span class="twain-save-hint">to <em id="twain-save-to">main</em></span>
+              <span class="twain-save-shortcut">⌘S</span>
+              <input type="text" id="twain-entries-search" class="twain-entries-search" placeholder="🔍" autocomplete="off" />
+              <span class="twain-savebar-spacer"></span>
+              <button type="button" id="btn-twain-focus" class="twain-savebar-btn" title="Focus mode — full window journal">▣</button>
+              <button type="button" id="btn-twain-expand" class="twain-savebar-btn" title="Expand / collapse scratch">⤢</button>
+              <button type="button" id="btn-twain-river" class="twain-savebar-btn" title="Mississippi mode">〰</button>
+            </div>
+            <div class="twain-savebar-right">
+              <input type="text" id="twain-list-input" class="twain-list-input" placeholder="list item…" autocomplete="off" />
+              <select id="twain-list-select" class="twain-list-select"></select>
+              <button type="button" id="btn-twain-list-add" class="twain-savebar-btn" title="New list">+</button>
+              <button type="button" id="btn-twain-list-show" class="twain-savebar-btn" title="Show list items">↑</button>
+            </div>
+            <div id="twain-list-popup" class="twain-list-popup hidden"></div>
+          </div>
+          <!-- Twain task bar: quick-add task from journal -->
+          <div id="twain-task-bar" class="twain-task-bar hidden">
+            <div class="twain-task-bar-row">
+              <input type="text" id="twain-task-desc" class="twain-task-input" placeholder="task…" autocomplete="off" />
+              <input type="text" id="twain-task-project" class="twain-task-input twain-task-meta" placeholder="project" autocomplete="off" />
+              <input type="text" id="twain-task-tags" class="twain-task-input twain-task-meta" placeholder="tags" autocomplete="off" />
+              <select id="twain-task-priority" class="twain-task-select">
+                <option value="">pri</option>
+                <option value="H">H</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+              </select>
+              <select id="twain-task-list" class="twain-task-select"></select>
+              <button type="button" id="btn-twain-task-add" class="twain-task-add-btn">+ task</button>
+            </div>
+          </div>
+          <div id="twain-entries-bar" class="twain-entries-bar hidden">
+            <div class="twain-entries-bar-row">
+              <button type="button" id="btn-twain-entries-toggle" class="twain-entries-toggle-btn">
+                <span id="twain-entries-info" class="twain-entries-info">— entries</span>
+                <span class="twain-entries-caret">▲</span>
+              </button>
+            </div>
+            <div id="twain-entries-drawer" class="twain-entries-drawer hidden"></div>
+          </div>
+        </section>
+
+        <!-- Ledgers -->
+        <section class="section hidden" id="section-ledger">
+          <form class="add-form-inline" id="add-ledger-form">
+            <input type="date" name="date" />
+            <input type="text" name="description" placeholder="Add transaction…" autocomplete="off" />
+            <input type="text" name="account" placeholder="account" list="account-list" />
+            <datalist id="account-list"></datalist>
+            <input type="text" name="amount" placeholder="amount (e.g. 45.00 or -45.00)" />
+            <input type="text" name="comment" placeholder="note…" />
+            <button type="submit" class="btn-inline-submit">save</button>
+          </form>
+          <div class="add-account-row">
+            <input type="text" id="add-account-input" class="inline-filter" placeholder="add account (e.g. expenses:travel)" style="width:260px" />
+            <button class="btn-inline-alt" id="btn-add-account">+ account</button>
+          </div>
+          <div class="hledger-toolbar">
+            <button class="btn-inline-alt hl-btn active" data-cmd="balance">balance</button>
+            <button class="btn-inline-alt hl-btn" data-cmd="register">register</button>
+            <button class="btn-inline-alt hl-btn" data-cmd="income">income stmt</button>
+          </div>
+          <div class="hledger-period-row">
+            <select id="hl-period" class="resource-select" style="font-size:11px">
+              <option value="">all time</option>
+              <option value="monthly">monthly</option>
+              <option value="weekly">weekly</option>
+            </select>
+            <input type="text" id="hl-filter" class="inline-filter" placeholder="account filter…" style="width:160px" />
+          </div>
+          <div class="hledger-output" id="hledger-output"></div>
+          <div class="ledger-summary" id="ledger-summary"></div>
+          <input type="text" id="ledger-search" class="inline-filter" placeholder="search transactions…" style="margin:8px 0;width:100%" />
+          <div class="ledger-recent" id="ledger-recent"></div>
+        </section>
+
+        <!-- Tags -->
+        <section class="section hidden" id="section-tags">
+          <div class="section-toolbar">
+            <input type="text" id="tags-filter" class="inline-filter" placeholder="filter tags…" />
+            <select id="tags-sort" class="toolbar-select-sm">
+              <option value="name">A→Z</option>
+              <option value="count-desc">Most tasks</option>
+              <option value="count-asc">Fewest tasks</option>
+            </select>
+          </div>
+          <div id="tags-chips" class="tags-chips-panel"></div>
+          <div id="tags-body"><div class="skeleton-msg">Loading…</div></div>
+        </section>
+
+        <!-- Projects -->
+        <section class="section hidden" id="section-projects">
+          <form class="add-form-inline" id="project-create-form">
+            <input type="text" name="name" placeholder="project name" autocomplete="off" style="width:140px" />
+            <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:120px" />
+            <button type="submit" class="btn-inline-submit">define project</button>
+          </form>
+          <div class="section-toolbar">
+            <input type="text" id="project-filter" class="inline-filter" placeholder="filter projects…" />
+          </div>
+          <div id="projects-body"><div class="skeleton-msg">Loading…</div></div>
+        </section>
+
+        <!-- Lists -->
+        <section class="section hidden" id="section-lists">
+          <form class="add-form-inline" id="add-list-item-form">
+            <input type="text" name="text" id="list-item-text" placeholder="Add item…" autocomplete="off" style="flex:1;min-width:200px" />
+            <button type="submit" class="btn-inline-submit">add</button>
+          </form>
+          <div class="section-toolbar">
+            <input type="text" id="list-filter" class="inline-filter" placeholder="filter items…" style="flex:1" autocomplete="off" />
+            <button class="btn-toolbar" id="btn-list-show-done">show done</button>
+          </div>
+          <div class="list-items" id="list-items"><div class="skeleton-msg">Loading…</div></div>
+        </section>
+
+        <!-- Next -->
+        <section class="section hidden" id="section-next">
+          <div class="service-panel">
+            <div class="service-panel-header">Next — Recommended Task</div>
+            <div class="service-panel-body">
+              <div id="next-card"><div class="skeleton-msg">Loading…</div></div>
+              <div style="margin-top:16px">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Due within 7 days</div>
+                <div id="next-upcoming"></div>
+              </div>
+              <div style="margin-top:12px">
+                <div style="font-size:11px;color:var(--error);margin-bottom:6px">Overdue</div>
+                <div id="next-overdue"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Warrior -->
+        <section class="section hidden" id="section-warrior">
+          <div class="service-panel">
+            <div class="service-panel-header">✱ Warrior — All Profiles</div>
+            <div class="service-panel-body">
+              <div id="warrior-totals" style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;margin-bottom:8px;border-bottom:1px solid var(--border)"></div>
+              <div id="warrior-profiles"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Community -->
+        <section class="section hidden" id="section-community">
+          <div class="service-panel">
+            <div class="service-panel-header">◎ Community — Shared Collections</div>
+            <div class="service-panel-body">
+
+              <!-- Collection picker + create -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+                <select id="community-select" class="resource-select" style="min-width:150px;flex:1"></select>
+                <button class="btn-inline-alt" id="btn-community-archive">archive</button>
+                <button class="btn-inline-alt" id="btn-comm-show-create" style="font-size:11px">+ new</button>
+              </div>
+              <form class="add-form-inline hidden" id="community-create-form" style="margin-bottom:10px">
+                <input type="text" name="name" placeholder="collection name (letters, numbers, - _)" autocomplete="off" pattern="[a-zA-Z0-9_-]+" style="width:200px" />
+                <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:120px" />
+                <button type="submit" class="btn-inline-submit">create</button>
+                <button type="button" class="btn-inline-alt" id="btn-comm-hide-create">cancel</button>
+              </form>
+
+              <!-- View tabs + search -->
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+                <div style="display:flex;gap:4px">
+                  <button class="community-tab active" data-view="unified">All</button>
+                  <button class="community-tab" data-view="tasks">Tasks</button>
+                  <button class="community-tab" data-view="journal">Journal</button>
+                </div>
+                <input type="text" id="comm-search" class="inline-filter" placeholder="search entries…" autocomplete="off" style="flex:1;min-width:140px" />
+              </div>
+
+              <div id="community-body"><div class="skeleton-msg">Select or create a collection above.</div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Questions -->
+        <section class="section hidden" id="section-questions">
+          <div class="service-panel">
+            <div class="service-panel-header">？Questions — Capture Templates</div>
+            <div class="service-panel-body">
+              <div id="questions-templates"></div>
+              <div id="questions-active-form" class="hidden" style="margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
+                <div id="questions-form-title" style="font-size:12px;font-weight:bold;margin-bottom:8px;color:var(--accent)"></div>
+                <form id="questions-answer-form"></form>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                  <button class="btn-inline-submit" id="btn-questions-submit">submit</button>
+                  <button class="btn-inline-alt" id="btn-questions-cancel">cancel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Export (expanded) -->
+        <section class="section hidden" id="section-export">
+          <div class="service-panel">
+            <div class="service-panel-header">Export</div>
+            <div class="service-panel-body" style="padding:10px 0">
+              <p style="color:var(--muted);font-size:12px;margin-bottom:12px">All exports are local file downloads. Nothing leaves your browser.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+                <button class="btn-inline-submit" id="btn-export-json">Full JSON</button>
+                <button class="btn-inline-alt" id="btn-export-tasks-csv">Tasks CSV</button>
+                <button class="btn-inline-alt" id="btn-export-journal-md">Journal Markdown</button>
+                <button class="btn-inline-alt" id="btn-export-hledger">Hledger File</button>
+              </div>
+              <div class="cmd-unified-output hidden" id="export-output"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Import -->
+        <section class="section hidden" id="section-import">
+          <div class="service-panel">
+            <div class="service-panel-header">Import from ww</div>
+            <div class="service-panel-body">
+              <div class="import-panel">
+                <p>Import your existing Workwarrior data. Grant read access to your <code>~/.workwarrior/</code> or <code>~/ww/</code> folder. Your data stays entirely in your browser — nothing is uploaded anywhere.</p>
+                <p style="font-size:11px;color:var(--warning);margin-bottom:10px">⚠ File System Access API required (Chrome/Edge/Firefox 111+). Not available in Safari.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn-inline-submit" id="btn-import-folder">Choose ww folder…</button>
+                  <button class="btn-inline-alt" id="btn-import-demo">Load demo data</button>
+                </div>
+                <div class="import-progress" id="import-progress"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Profile -->
+        <section class="section hidden" id="section-profile">
+          <div class="service-panel">
+            <div class="service-panel-header">Profiles</div>
+            <div class="service-panel-body">
+              <form class="add-form-inline" id="profile-create-form" style="padding:10px 0 10px">
+                <input type="text" name="name" placeholder="new profile name (e.g. work, personal)" autocomplete="off" style="flex:1;min-width:160px" />
+                <button type="submit" class="btn-inline-submit">create profile</button>
+              </form>
+              <div id="profile-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CTRL -->
+        <section class="section hidden" id="section-ctrl">
+          <div class="service-panel">
+            <div class="service-panel-header">CTRL — Settings</div>
+            <div class="service-panel-body">
+              <div style="padding:10px 0">
+                <div style="font-size:11px;color:var(--muted);margin-bottom:8px">All data is stored in your browser's IndexedDB. Nothing leaves your device.</div>
+                <div style="margin-bottom:14px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
+                  <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Storage</div>
+                  <div id="ctrl-storage-info" style="font-size:12px;color:var(--text)">Loading…</div>
+                  <button class="btn-inline-alt" id="btn-ctrl-clear-profile" style="margin-top:8px;color:var(--error);border-color:var(--error)">Clear current profile data</button>
+                </div>
+                <div style="margin-bottom:14px;padding:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
+                  <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Keyboard shortcuts</div>
+                  <div style="font-size:11px;line-height:2;color:var(--text)">
+                    <code>g t</code> Tasks &nbsp; <code>g i</code> Times &nbsp; <code>g j</code> Journals &nbsp; <code>g l</code> Ledger<br>
+                    <code>g p</code> Projects &nbsp; <code>g x</code> Tags &nbsp; <code>g e</code> Export<br>
+                    <code>Esc</code> Focus terminal &nbsp; <code>Tab</code> Filter mode<br>
+                    <code>t &lt;desc&gt;</code> Quick task &nbsp; <code>j &lt;text&gt;</code> Quick journal<br>
+                    <code>start &lt;tags&gt;</code> Start tracking &nbsp; <code>stop</code> Stop tracking
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Terminal line -->
+  <div id="terminal-bar">
+    <div id="cmd-output" class="hidden"></div>
+    <div id="hints-bar">
+      <span id="hints-actions" class="hints-actions"></span>
+      <span id="hints-text" class="hints-text">type a command — tab to filter · t &lt;task&gt; · j &lt;note&gt; · start/stop</span>
+      <span id="hints-power" class="hints-power">
+        <button class="hints-btn" id="hints-hist-btn" title="Command history">hist</button>
+        <button class="hints-btn" id="hints-help-btn" title="Help (?)">?</button>
+      </span>
+    </div>
+    <div id="terminal-input-row">
+      <span id="term-profile-badge" class="term-badge"></span>
+      <span id="term-prompt" class="prompt-exec">❯ </span>
+      <input type="text" id="term-input" autocomplete="off" spellcheck="false" />
+      <button id="term-pos-toggle" class="term-icon-btn" title="Move terminal">↑</button>
+      <button id="term-expand-toggle" class="term-icon-btn" title="Expand/collapse terminal">▾</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden" style="position:fixed;bottom:90px;right:16px;z-index:9999;padding:8px 14px;border-radius:5px;font-size:12px;font-family:inherit;pointer-events:none;transition:opacity 0.2s"></div>
+
+  <!-- Confirm modal -->
+  <div id="confirm-modal" class="confirm-overlay hidden">
+    <div class="confirm-dialog">
+      <div class="confirm-msg" id="confirm-msg"></div>
+      <div class="confirm-actions">
+        <button class="btn-inline-submit" id="confirm-ok">OK</button>
+        <button class="btn-inline-alt" id="confirm-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help overlay -->
+  <div id="ww-help-overlay" class="ww-help-overlay hidden">
+    <div class="ww-help-panel">
+      <div class="ww-help-header">
+        <span class="ww-help-title"><span class="ww-help-ww">ww</span> · webwarrior</span>
+        <button class="ww-help-close" id="btn-ww-help-close" title="Close (Esc)">×</button>
+      </div>
+      <div class="ww-help-body" style="padding:16px">
+        <p style="color:var(--muted);font-size:12px;margin-bottom:12px">All data stored locally in your browser. No server, no cloud.</p>
+        <table style="font-size:12px;border-collapse:collapse;width:100%">
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g t</td><td>Go to Tasks</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g i</td><td>Go to Times</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g j</td><td>Go to Journals</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g l</td><td>Go to Ledger</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g p</td><td>Go to Projects</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">g x</td><td>Go to Tags</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">Tab</td><td>Toggle filter mode</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">Esc</td><td>Focus terminal</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">t &lt;desc&gt;</td><td>Quick-add task</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">j &lt;text&gt;</td><td>Quick journal entry</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">start &lt;tags&gt;</td><td>Start time tracking</td></tr>
+          <tr><td style="padding:4px 16px 4px 0;color:var(--accent)">stop</td><td>Stop time tracking</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task Detail Drawer -->
+  <div id="task-drawer" class="task-drawer hidden" aria-hidden="true">
+    <div class="task-drawer-backdrop" id="tdr-backdrop"></div>
+    <div class="task-drawer-panel" role="dialog" aria-label="Task detail">
+
+      <!-- Header -->
+      <div class="tdr-header">
+        <span class="tdr-urgency-score" id="tdr-urgency-score"></span>
+        <span class="tdr-project-badge" id="tdr-header-project"></span>
+        <span class="tdr-header-title" id="tdr-header-title"></span>
+        <span class="tdr-header-tags" id="tdr-header-tags"></span>
+        <div class="tdr-header-actions" id="tdr-header-actions"></div>
+        <button class="tdr-close-btn" id="tdr-close" title="Close">✕</button>
+      </div>
+
+      <div class="tdr-body">
+        <!-- Core fields -->
+        <div class="tdr-fields">
+          <div class="tdr-field-row"><label class="tdr-label">description</label><input class="tdr-input" id="tdr-desc" type="text" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">list</label><select class="tdr-input tdr-select" id="tdr-task-list"></select></div>
+          <div class="tdr-field-row"><label class="tdr-label">project</label><input class="tdr-input" id="tdr-proj" type="text" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">priority</label>
+            <select class="tdr-input tdr-select" id="tdr-pri">
+              <option value="">—</option><option value="H">H</option><option value="M">M</option><option value="L">L</option>
+            </select>
+          </div>
+          <div class="tdr-field-row"><label class="tdr-label">due</label><input class="tdr-input" id="tdr-due" type="date"></div>
+          <div class="tdr-field-row"><label class="tdr-label">sched</label><input class="tdr-input" id="tdr-sched" type="date"></div>
+          <div class="tdr-field-row"><label class="tdr-label">wait</label><input class="tdr-input" id="tdr-wait" type="date"></div>
+          <div class="tdr-field-row"><label class="tdr-label">tags</label><input class="tdr-input" id="tdr-tags" type="text" placeholder="space or comma separated" autocomplete="off"></div>
+          <div class="tdr-field-row tdr-field-readonly"><label class="tdr-label">status</label><span class="tdr-value" id="tdr-status"></span></div>
+          <div class="tdr-field-row tdr-field-readonly"><label class="tdr-label">urgency</label><span class="tdr-value" id="tdr-urgency-val"></span></div>
+          <div class="tdr-field-row tdr-field-readonly"><label class="tdr-label">created</label><span class="tdr-value" id="tdr-created"></span></div>
+        </div>
+
+        <!-- UDAs -->
+        <div class="tdr-section-header">UDAS</div>
+        <div id="tdr-uda-list"></div>
+        <div class="tdr-uda-add-row">
+          <input class="tdr-input tdr-uda-key-input" id="tdr-uda-key" type="text" placeholder="add UDA (type to search…)" list="tdr-uda-datalist" autocomplete="off">
+          <datalist id="tdr-uda-datalist"></datalist>
+          <input class="tdr-input tdr-uda-val-input" id="tdr-uda-val" type="text" placeholder="value">
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-add-uda">+ UDA</button>
+        </div>
+        <button class="btn-inline-submit" id="btn-tdr-save" style="margin:10px 0 14px">save</button>
+
+        <!-- Annotations -->
+        <div id="tdr-annotations"></div>
+        <div class="tdr-ann-add-row">
+          <input class="tdr-input" id="tdr-ann-text" type="text" placeholder="add annotation…" style="flex:1">
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-annotate">annotate</button>
+        </div>
+
+        <!-- Note to journal -->
+        <div class="tdr-journal-row">
+          <input class="tdr-input" id="tdr-journal-text" type="text" placeholder="note to journal…" style="flex:1">
+          <select class="tdr-input tdr-select tdr-journal-sel" id="tdr-journal-select"></select>
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-to-journal">→ journal</button>
+        </div>
+
+        <!-- Share to Community -->
+        <div class="tdr-section-header" style="margin-top:14px">COMMUNITY</div>
+        <div class="tdr-journal-row" style="margin-top:6px">
+          <select class="tdr-input tdr-select" id="tdr-community-select" style="flex:1"></select>
+          <input class="tdr-input" id="tdr-community-note" type="text" placeholder="optional note…" style="flex:2">
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-to-community">→ share</button>
+        </div>
+
+        <!-- Dependencies -->
+        <div class="tdr-section-header" style="margin-top:14px">DEPENDENCIES</div>
+        <div id="tdr-dep-list"></div>
+        <div class="tdr-dep-search-row">
+          <input class="tdr-input" id="tdr-dep-search" type="text" placeholder="task ID or description…" style="flex:1" autocomplete="off">
+          <button class="btn-inline-alt tdr-btn-sm" id="btn-tdr-blocked-by">→ blocked by</button>
+          <button class="btn-inline-alt tdr-btn-sm" id="btn-tdr-blocks">→ blocks</button>
+        </div>
+        <div id="tdr-dep-results" class="tdr-dep-results hidden"></div>
+      </div><!-- /tdr-body -->
+
+    </div><!-- /tdr-panel -->
+  </div><!-- /task-drawer -->
+
+  <!-- Journal Detail Drawer -->
+  <div id="journal-drawer" class="task-drawer hidden" aria-hidden="true">
+    <div class="task-drawer-backdrop" id="jdr-backdrop"></div>
+    <div class="task-drawer-panel" role="dialog" aria-label="Journal entry detail">
+
+      <div class="tdr-header">
+        <span class="tdr-urgency-score" id="jdr-journal-badge" style="background:rgba(63,185,80,0.1);border-color:rgba(63,185,80,0.3);color:var(--success)"></span>
+        <span class="tdr-header-title" id="jdr-date-title"></span>
+        <div class="tdr-header-actions" id="jdr-header-actions"></div>
+        <button class="tdr-close-btn" id="jdr-close">✕</button>
+      </div>
+
+      <div class="tdr-body">
+        <div class="tdr-section-header" style="margin-top:0;border-top:none">BODY</div>
+        <textarea class="jdr-body-textarea" id="jdr-body" rows="8" placeholder="Journal entry body…"></textarea>
+
+        <div class="tdr-fields" style="margin-top:8px">
+          <div class="tdr-field-row"><label class="tdr-label">journal</label>
+            <select class="tdr-input tdr-select" id="jdr-journal-select"></select>
+          </div>
+          <div class="tdr-field-row"><label class="tdr-label">project</label><input class="tdr-input" id="jdr-project" type="text" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">tags</label><input class="tdr-input" id="jdr-tags" type="text" placeholder="space or comma separated" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">priority</label>
+            <select class="tdr-input tdr-select" id="jdr-priority">
+              <option value="">—</option><option value="H">H</option><option value="M">M</option><option value="L">L</option>
+            </select>
+          </div>
+          <div class="tdr-field-row tdr-field-readonly"><label class="tdr-label">created</label><span class="tdr-value" id="jdr-created"></span></div>
+        </div>
+
+        <button class="btn-inline-submit" id="btn-jdr-save" style="margin:10px 0 14px">save</button>
+
+        <div id="jdr-annotations"></div>
+        <div class="tdr-ann-add-row">
+          <input class="tdr-input" id="jdr-ann-text" type="text" placeholder="add annotation…" style="flex:1">
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-jdr-annotate">annotate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Time Interval Drawer -->
+  <div id="time-drawer" class="task-drawer hidden" aria-hidden="true">
+    <div class="task-drawer-backdrop" id="tmr-backdrop"></div>
+    <div class="task-drawer-panel" role="dialog" aria-label="Time interval detail">
+      <div class="tdr-header">
+        <span class="tdr-urgency-score" id="tmr-dur-badge" style="background:rgba(88,166,255,0.1);border-color:rgba(88,166,255,0.3);color:var(--accent)"></span>
+        <span class="tdr-header-title" id="tmr-tags-title"></span>
+        <div class="tdr-header-actions">
+          <button data-tmr-action="stop" id="tmr-stop-btn" style="display:none">■ stop</button>
+          <button data-tmr-action="delete" style="color:var(--error);border-color:var(--error)">✗ delete</button>
+        </div>
+        <button class="tdr-close-btn" id="tmr-close">✕</button>
+      </div>
+      <div class="tdr-body">
+        <div class="tdr-fields">
+          <div class="tdr-field-row"><label class="tdr-label">tags</label><input class="tdr-input" id="tmr-tags" type="text" placeholder="space or comma separated" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">start</label><input class="tdr-input" id="tmr-start" type="datetime-local"></div>
+          <div class="tdr-field-row"><label class="tdr-label">end</label><input class="tdr-input" id="tmr-end" type="datetime-local" placeholder="leave empty if active"></div>
+          <div class="tdr-field-row tdr-field-readonly"><label class="tdr-label">duration</label><span class="tdr-value" id="tmr-duration"></span></div>
+        </div>
+        <div class="tdr-section-header">ANNOTATION</div>
+        <textarea class="jdr-body-textarea" id="tmr-annotation" rows="3" placeholder="Optional note…"></textarea>
+        <button class="btn-inline-submit" id="btn-tmr-save" style="margin:10px 0 14px">save</button>
+        <div class="tdr-section-header">CROSS-POST</div>
+        <div class="tdr-journal-row" style="margin-top:6px">
+          <input class="tdr-input" id="tmr-journal-text" type="text" placeholder="note to journal…" style="flex:1">
+          <select class="tdr-input tdr-select tdr-journal-sel" id="tmr-journal-select"></select>
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-tmr-to-journal">→ journal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ledger Transaction Drawer -->
+  <div id="ledger-drawer" class="task-drawer hidden" aria-hidden="true">
+    <div class="task-drawer-backdrop" id="ldr-backdrop"></div>
+    <div class="task-drawer-panel" role="dialog" aria-label="Transaction detail">
+
+      <div class="tdr-header">
+        <span class="tdr-urgency-score" id="ldr-date-badge" style="background:rgba(210,153,34,0.1);border-color:rgba(210,153,34,0.3);color:var(--warning)"></span>
+        <span class="tdr-header-title" id="ldr-desc-title"></span>
+        <div class="tdr-header-actions">
+          <button data-ldr-action="delete" style="color:var(--error);border-color:var(--error)">✗ delete</button>
+        </div>
+        <button class="tdr-close-btn" id="ldr-close">✕</button>
+      </div>
+
+      <div class="tdr-body">
+        <div class="tdr-fields">
+          <div class="tdr-field-row"><label class="tdr-label">date</label><input class="tdr-input" id="ldr-date" type="date"></div>
+          <div class="tdr-field-row"><label class="tdr-label">description</label><input class="tdr-input" id="ldr-desc" type="text" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">ledger</label>
+            <select class="tdr-input tdr-select" id="ldr-ledger-select"></select>
+          </div>
+          <div class="tdr-field-row"><label class="tdr-label">comment</label><input class="tdr-input" id="ldr-comment" type="text" autocomplete="off"></div>
+        </div>
+        <button class="btn-inline-submit" id="btn-ldr-save" style="margin:8px 0 14px">save header</button>
+
+        <div class="tdr-section-header">POSTINGS</div>
+        <div id="ldr-postings"></div>
+        <div class="ldr-add-posting-row">
+          <input class="tdr-input" id="ldr-new-account" type="text" placeholder="account" list="account-list" style="flex:1.5" autocomplete="off">
+          <input class="tdr-input" id="ldr-new-amount" type="text" placeholder="amount" style="flex:0.7">
+          <input class="tdr-input" id="ldr-new-comment" type="text" placeholder="note…" style="flex:1">
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-ldr-add-posting">+ add</button>
+        </div>
+
+        <div class="tdr-section-header" style="margin-top:14px">CROSS-POST</div>
+        <div class="tdr-journal-row" style="margin-top:6px">
+          <input class="tdr-input" id="ldr-journal-text" type="text" placeholder="note to journal…" style="flex:1">
+          <select class="tdr-input tdr-select tdr-journal-sel" id="ldr-journal-select"></select>
+          <button class="btn-inline-submit tdr-btn-sm" id="btn-ldr-to-journal">→ journal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available — show unobtrusive notice
+              const badge = document.querySelector('.ww-offline-badge');
+              if (badge) { badge.textContent = 'update ready — reload'; badge.style.opacity = '1'; badge.style.cursor = 'pointer'; badge.onclick = () => location.reload(); }
+            }
+          });
+        });
+      }).catch(() => {/* SW not supported in file:// — ignore */});
+    }
+  </script>
+</body>
+</html>

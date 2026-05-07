@@ -1,2 +1,0 @@
-# WebWarrior
-Tools for Browsers
