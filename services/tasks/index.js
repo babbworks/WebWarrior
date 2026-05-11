@@ -2,6 +2,7 @@
 
 import { getAll, getOne, put, remove } from '../../storage/db.js';
 import { computeUrgency } from '../../core/urgency.js';
+import { getAttributes } from '../attributes/index.js';
 
 const STORE = 'tasks';
 
@@ -35,7 +36,8 @@ export async function addTask(profile, fields) {
     modified:  ts,
     entry:     ts,
   };
-  task.urgency = computeUrgency(task);
+  const udaDefinitions = await getAttributes(profile);
+  task.urgency = computeUrgency(task, udaDefinitions);
   await put(profile, STORE, task);
   return task;
 }
@@ -52,7 +54,8 @@ export async function updateTask(profile, uuid, updates) {
   for (const [k, v] of Object.entries(updates)) {
     if (v === undefined) delete updated[k];
   }
-  updated.urgency = computeUrgency(updated);
+  const udaDefinitions = await getAttributes(profile);
+  updated.urgency = computeUrgency(updated, udaDefinitions);
   await put(profile, STORE, updated);
   return updated;
 }

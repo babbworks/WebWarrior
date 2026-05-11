@@ -61,9 +61,8 @@ function groupTasksByProject(tasks) {
 }
 
 function renderProjectGroup(group, showAnnotations, bulkSelected, onAction) {
-  const header = group.project
-    ? `<div class="task-group-header">${esc(group.project)} <span class="task-group-count">${group.tasks.length}</span></div>`
-    : '';
+  const groupLabel = group.project || 'Ungrouped';
+  const header = `<div class="task-group-header">${esc(groupLabel)} <span class="task-group-count">${group.tasks.length}</span></div>`;
   const rows = group.tasks.map(t => renderTaskRow(t, showAnnotations, bulkSelected, onAction)).join('');
   return header + rows;
 }
@@ -76,32 +75,46 @@ function renderTaskRow(t, showAnnotations, bulkSelected, onAction) {
   const tags = (t.tags || []).map(tag => `<span class="task-tag">${esc(tag)}</span>`).join('');
   const pri = t.priority ? `<span class="task-priority pri-${t.priority.toLowerCase()}">${t.priority}</span>` : '';
   const anns = showAnnotations && t.annotations?.length
-    ? `<div class="task-annotations">${t.annotations.map(a => `<div class="task-ann">↳ ${esc(a.description)}</div>`).join('')}</div>`
+    ? `<div class="task-annotations">${t.annotations.map((a, i) => `
+    <div class="task-ann" data-ann-uuid="${t.uuid}" data-ann-idx="${i}">
+      <span class="task-ann-text">↳ ${esc(a.description)}</span>
+      <span class="ann-hover-actions">
+        <button class="ann-hover-btn" data-ann-action="to-task" data-uuid="${t.uuid}" data-idx="${i}">+ task</button>
+        <button class="ann-hover-btn" data-ann-action="to-journal" data-uuid="${t.uuid}" data-idx="${i}">+ journal</button>
+        <button class="ann-hover-btn" data-ann-action="to-community" data-uuid="${t.uuid}" data-idx="${i}">+ community</button>
+        <button class="ann-hover-btn" data-ann-action="to-list" data-uuid="${t.uuid}" data-idx="${i}">+ list</button>
+      </span>
+    </div>`).join('')}</div>`
     : '';
 
   return `
     <div class="task-row ${isActive ? 'task-active' : ''} urgency-${level}" data-uuid="${t.uuid}" data-action="open-drawer">
-      <input type="checkbox" class="task-checkbox" data-uuid="${t.uuid}" data-action="select">
-      <span class="task-desc">${esc(t.description)}</span>
-      ${pri}
-      ${t.project && !showAnnotations ? `<span class="task-project-badge">${esc(t.project)}</span>` : ''}
-      ${tags}
-      ${due}
-      <span class="task-urgency-badge urgency-${level}">${t.urgency.toFixed(1)}</span>
-      <span class="task-actions">
+      <span class="task-urgency-bar urgency-bar-${level}"></span>
+      <input type="checkbox" class="task-checkbox" data-uuid="${t.uuid}" data-action="select" ${isSelected ? 'checked' : ''}>
+      <span class="task-row-left">
+        ${t.project ? `<span class="task-project-badge">${esc(t.project)}</span>` : ''}
+        <span class="task-desc">${esc(t.description)}</span>
+      </span>
+      <span class="task-row-mid">
+        ${tags}${pri}${due}
+      </span>
+      <span class="task-row-triggers task-inline-trigger">
+        <button class="task-action-btn" data-action="inline-annotate" data-uuid="${t.uuid}">+ annotate</button>
+        <button class="task-action-btn" data-action="inline-journal" data-uuid="${t.uuid}">→ journal</button>
+        <button class="task-action-btn" data-action="inline-dep" data-uuid="${t.uuid}">+ dep</button>
+      </span>
+      <span class="task-row-right">
         ${isActive
-          ? `<button class="task-action-btn" data-action="stop" data-uuid="${t.uuid}" title="Stop">■</button>`
-          : `<button class="task-action-btn" data-action="start" data-uuid="${t.uuid}" title="Start">▶</button>`
+          ? `<button class="task-action-btn task-action-word" data-action="stop" data-uuid="${t.uuid}">■ stop</button>`
+          : `<button class="task-action-btn task-action-word" data-action="start" data-uuid="${t.uuid}">▶ start</button>`
         }
-        <button class="task-action-btn" data-action="done" data-uuid="${t.uuid}" title="Done">✓</button>
-        <button class="task-action-btn" data-action="annotate" data-uuid="${t.uuid}" title="Annotate">✎</button>
-        <button class="task-action-btn" data-action="task-community" data-uuid="${t.uuid}" title="Share to Community">◎</button>
-        <button class="task-action-btn task-action-delete" data-action="delete" data-uuid="${t.uuid}" title="Delete">✗</button>
-        <button class="task-expand-btn" data-action="expand" data-uuid="${t.uuid}" title="Expand">▾</button>
+        <button class="task-action-btn task-action-word" data-action="done" data-uuid="${t.uuid}">✓ done</button>
+        <button class="task-action-btn task-action-word" data-action="inline-comm" data-uuid="${t.uuid}">◎ comm</button>
+        <button class="task-action-btn task-action-icon task-action-delete" data-action="delete" data-uuid="${t.uuid}" title="Delete">●</button>
       </span>
     </div>
     ${anns}
-    <div class="jrnl-inline-panel" data-panel="task-${t.uuid}"></div>
+    <div class="task-inline-drop" data-drop="task-${t.uuid}"></div>
   `;
 }
 
@@ -252,8 +265,16 @@ function renderJournalEntry(e, showMd) {
     ? markdownLite(esc(rawBody))
     : esc(rawBody).replace(/\n/g, '<br>');
 
-  const anns = (e.annotations || []).map(a =>
-    `<div class="journal-annotation">↳ ${esc(a.text)} <span class="journal-ann-date">${fmtTime(a.entry)}</span></div>`
+  const anns = (e.annotations || []).map((a, i) =>
+    `<div class="journal-annotation" data-jrnl-id="${e.id}" data-ann-idx="${i}">
+      <span class="journal-ann-text">↳ ${esc(a.text)} <span class="journal-ann-date">${fmtTime(a.entry)}</span></span>
+      <span class="ann-hover-actions">
+        <button class="ann-hover-btn" data-ann-action="jrnl-to-task" data-id="${e.id}" data-idx="${i}">+ task</button>
+        <button class="ann-hover-btn" data-ann-action="jrnl-to-journal" data-id="${e.id}" data-idx="${i}">+ journal</button>
+        <button class="ann-hover-btn" data-ann-action="jrnl-to-community" data-id="${e.id}" data-idx="${i}">+ community</button>
+        <button class="ann-hover-btn" data-ann-action="jrnl-to-list" data-id="${e.id}" data-idx="${i}">+ list</button>
+      </span>
+    </div>`
   ).join('');
 
   const meta = [
@@ -422,37 +443,108 @@ export function renderLedgerSummary(balances) {
 
 // ── Tags ─────────────────────────────────────────────────────────────────────
 
-export function renderTags(tags, filterText = '') {
+export function renderTags(tags, filterText = '', tasks = []) {
   const chips = document.getElementById('tags-chips');
   const body  = document.getElementById('tags-body');
   if (!chips || !body) return;
   const filtered = filterText
     ? tags.filter(t => t.name.toLowerCase().includes(filterText.toLowerCase()))
     : tags;
-  chips.innerHTML = filtered.map(t =>
-    `<span class="tag-chip" data-tag="${esc(t.name)}">${esc(t.name)} <span class="tag-count">${t.count}</span></span>`
-  ).join('');
-  body.innerHTML = filtered.length === 0
-    ? '<div class="skeleton-msg">No tags.</div>'
-    : `<div style="font-size:11px;color:var(--muted)">${filtered.length} tag${filtered.length !== 1 ? 's' : ''}</div>`;
+  chips.innerHTML = '';
+  if (filtered.length === 0) {
+    body.innerHTML = '<div class="skeleton-msg">No tags.</div>';
+    return;
+  }
+  body.innerHTML = filtered.map(t => {
+    const tagTasks = tasks.filter(task => (task.tags || []).includes(t.name));
+    const latestDate = tagTasks.length > 0 ? tagTasks[0].modified?.slice(0, 10) || '' : '';
+    return `
+      <div class="tag-bar" data-tag-name="${esc(t.name)}">
+        <div class="tag-bar-header" data-action="toggle-tag">
+          <span class="tag-bar-name">${esc(t.name)}</span>
+          <span class="tag-bar-count">${t.count} task${t.count !== 1 ? 's' : ''}</span>
+          ${latestDate ? `<span class="tag-bar-date">${latestDate}</span>` : ''}
+          <span class="tag-bar-caret">▸</span>
+        </div>
+        <div class="tag-bar-tasks hidden">
+          ${tagTasks.map(task => `
+            <div class="tag-task-item" data-uuid="${task.uuid}">
+              <span class="task-desc">${esc(task.description)}</span>
+              ${task.project ? `<span class="task-project-badge">${esc(task.project)}</span>` : ''}
+              ${task.priority ? `<span class="task-priority pri-${task.priority.toLowerCase()}">${task.priority}</span>` : ''}
+              <span class="task-urgency-badge urgency-${urgencyLevel(task.urgency)}">${task.urgency.toFixed(1)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ── Projects ─────────────────────────────────────────────────────────────────
 
-export function renderProjects(projects, filterText = '') {
+export function renderProjects(projects, filterText = '', { allTasks = [], journalEntries = [], ledgerTxns = [], timeIntervals = [] } = {}) {
   const body = document.getElementById('projects-body');
   if (!body) return;
   const filtered = filterText
     ? projects.filter(p => p.name.toLowerCase().includes(filterText.toLowerCase()))
     : projects;
   if (filtered.length === 0) { body.innerHTML = '<div class="skeleton-msg">No projects.</div>'; return; }
-  body.innerHTML = filtered.map(p => `
-    <div class="task-row">
-      <span class="task-desc">◆ ${esc(p.name)}</span>
-      <span class="task-project-badge">${p.pending} pending</span>
-      <span class="task-meta-muted">${p.total} total</span>
-    </div>
-  `).join('');
+  body.innerHTML = filtered.map(p => {
+    const projTasks = allTasks.filter(t => t.project === p.name);
+    const pending = projTasks.filter(t => t.status === 'pending' || t.status === 'active');
+    const done = projTasks.filter(t => t.status === 'completed');
+    const nextTask = pending.length > 0 ? pending[0] : null;
+    const projJournals = journalEntries.filter(e => (e.project || '').toLowerCase() === p.name.toLowerCase());
+    const projLedger = ledgerTxns.filter(t => (t.description || '').toLowerCase().includes(p.name.toLowerCase()));
+    const projTime = timeIntervals.filter(i => (i.tags || []).some(tag => tag.toLowerCase() === p.name.toLowerCase()));
+    const totalSeconds = projTime.reduce((s, i) => {
+      const dur = i.end ? (new Date(i.end) - new Date(i.start)) / 1000 : 0;
+      return s + dur;
+    }, 0);
+    const pct = p.total > 0 ? Math.round((done.length / p.total) * 100) : 0;
+
+    return `
+      <div class="project-card" data-project="${esc(p.name)}">
+        <div class="project-card-header" data-action="toggle-project">
+          <span class="project-card-name">${esc(p.name)}</span>
+          <span class="project-card-meta">${p.pending} pending · ${done.length} done</span>
+          <span class="project-card-bar"><span class="project-card-bar-fill" style="width:${pct}%"></span></span>
+          <span class="project-card-caret">▸</span>
+        </div>
+        <div class="project-card-body hidden">
+          ${nextTask ? `<div class="project-next-task" data-uuid="${nextTask.uuid}" data-action="project-open-task">
+            <span style="color:var(--muted);font-size:10px">NEXT</span>
+            <span class="task-desc" style="font-weight:500">${esc(nextTask.description)}</span>
+            <span class="task-urgency-badge urgency-${urgencyLevel(nextTask.urgency)}">${nextTask.urgency.toFixed(1)}</span>
+          </div>` : ''}
+          <div class="project-section">
+            <div class="project-section-label">TASKS ${pending.length} pending · ${done.length} done</div>
+            ${pending.map(t => `<div class="project-task-item project-clickable" data-uuid="${t.uuid}" data-action="project-open-task">• ${esc(t.description)}</div>`).join('')}
+            ${done.length > 0 ? `<details class="project-done-details"><summary style="font-size:10px;color:var(--muted);cursor:pointer">▸ Done (${done.length})</summary>
+              ${done.map(t => `<div class="project-task-item project-task-done project-clickable" data-uuid="${t.uuid}" data-action="project-open-task">• ${esc(t.description)}</div>`).join('')}
+            </details>` : ''}
+          </div>
+          <div class="project-section">
+            <div class="project-section-label">JOURNAL ${projJournals.length} entries</div>
+            ${projJournals.length === 0 ? `<div class="project-section-empty">no journal entries with @project:${esc(p.name)}</div>` : 
+              projJournals.slice(0, 5).map(e => `<div class="project-journal-item project-clickable" data-id="${e.id}" data-action="project-open-journal">• ${esc((e.body || '').slice(0, 80))}</div>`).join('')}
+          </div>
+          <div class="project-section">
+            <div class="project-section-label">LEDGER ${projLedger.length} transactions</div>
+            ${projLedger.length === 0 ? `<div class="project-section-empty">no ledger entries with ; project:${esc(p.name)}</div>` :
+              projLedger.slice(0, 5).map(t => `<div class="project-ledger-item project-clickable" data-id="${t.id}" data-action="project-open-ledger">• ${esc(t.description || '')} ${t.date || ''}</div>`).join('')}
+          </div>
+          <div class="project-section">
+            <div class="project-section-label">TIME TRACKED</div>
+            ${totalSeconds === 0 ? `<div class="project-section-empty">no time tracked for ${esc(p.name)}</div>` :
+              `<div class="project-time-total">${formatDuration(totalSeconds)}</div>
+               ${projTime.slice(0, 5).map(i => `<div class="project-time-item project-clickable" data-id="${i.id}" data-action="project-open-time">• ${(i.tags || []).join(', ')} — ${formatDuration(i.end ? (new Date(i.end) - new Date(i.start)) / 1000 : 0)}</div>`).join('')}`}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 // ── Profile list ─────────────────────────────────────────────────────────────
@@ -547,4 +639,133 @@ function markdownLite(html) {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
     .replace(/\n/g, '<br>');
+}
+
+// ── Attributes ───────────────────────────────────────────────────────────────
+
+/**
+ * Renders attribute definition cards into #attr-list.
+ * @param {Array} definitions - Array of AttributeDefinition objects
+ */
+export function renderAttributes(definitions) {
+  const el = document.getElementById('attr-list');
+  if (!el) return;
+  if (!definitions || definitions.length === 0) {
+    el.innerHTML = '<div class="skeleton-msg">No attributes defined.</div>';
+    return;
+  }
+
+  // Collect all group names for the dropdown
+  const allGroups = [...new Set(definitions.map(d => d.group || 'Ungrouped'))].sort();
+
+  // Group by the group field
+  const groups = new Map();
+  for (const def of definitions) {
+    const g = def.group || 'Ungrouped';
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(def);
+  }
+
+  const groupOptions = allGroups.map(g => `<option value="${esc(g)}">${esc(g)}</option>`).join('');
+
+  el.innerHTML = [...groups.entries()].map(([groupName, defs]) => `
+    <div class="attr-group">
+      <div class="attr-group-header" data-action="toggle-attr-group">
+        <span class="attr-group-caret">▾</span>
+        ${esc(groupName)} <span class="attr-group-count">${defs.length}</span>
+        <button class="attr-assign-profile-btn" data-assign-group="${esc(groupName)}" title="Assign entire group to a profile">→ profile</button>
+      </div>
+      <div class="attr-group-items">
+        ${defs.map(def => {
+          const allowedStr = (def.allowedValues || []).join(', ');
+          return `
+            <div class="attr-card" data-attr-name="${esc(def.name)}">
+              <span class="attr-card-name">${esc(def.name)}</span>
+              ${def.label ? `<span class="attr-card-label">${esc(def.label)}</span>` : ''}
+              <span class="attr-card-type">${esc(def.type)}</span>
+              ${def.defaultValue ? `<span class="attr-card-default">default: ${esc(def.defaultValue)}</span>` : ''}
+              ${allowedStr ? `<span class="attr-card-allowed" title="${esc(allowedStr)}">[${esc(allowedStr)}]</span>` : ''}
+              ${def.urgencyCoefficient ? `<span class="attr-card-urgency">⚡ ${def.urgencyCoefficient}</span>` : ''}
+              ${def.readOnly ? `<span class="attr-card-readonly">read-only</span>` : ''}
+              <span class="attr-card-actions">
+                <select class="attr-group-assign" data-attr-assign="${esc(def.name)}" title="Assign to group">
+                  ${allGroups.map(g => `<option value="${esc(g)}"${g === (def.group || 'Ungrouped') ? ' selected' : ''}>${esc(g)}</option>`).join('')}
+                  <option value="__new__">+ New group…</option>
+                </select>
+                <button class="attr-assign-profile-btn" data-assign-attr="${esc(def.name)}" title="Assign to another profile">→</button>
+                <button class="btn-inline-alt action-btn-sm" data-attr-duplicate="${esc(def.name)}" title="Duplicate to group">⧉</button>
+                <button class="btn-inline-alt action-btn-sm" data-attr-edit="${esc(def.name)}" title="Edit">✎</button>
+                <button class="btn-inline-alt action-btn-sm" data-attr-delete="${esc(def.name)}" title="Delete" style="color:var(--error);border-color:var(--error)">✗</button>
+              </span>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * Returns HTML string for a type-appropriate input for a UDA value.
+ * @param {Object} definition - AttributeDefinition
+ * @param {*} value - Current value
+ * @param {boolean} readOnly - Whether the field is read-only
+ * @returns {string} HTML string
+ */
+export function renderUdaInput(definition, value, readOnly) {
+  const safeVal = value != null ? String(value) : '';
+  const safeName = esc(definition.name);
+
+  if (readOnly) {
+    return `<span class="tdr-uda-val-readonly">${esc(safeVal || definition.defaultValue || '—')}</span>`;
+  }
+
+  let warning = '';
+  if (safeVal && !matchesType(definition.type, safeVal, definition.allowedValues)) {
+    warning = '<span class="uda-type-warning">⚠ type mismatch</span>';
+  }
+
+  switch (definition.type) {
+    case 'numeric':
+      return `<input type="number" class="tdr-uda-typed-input" data-uda-key="${safeName}" value="${esc(safeVal)}" step="any" />${warning}`;
+    case 'date':
+      return `<input type="date" class="tdr-uda-typed-input" data-uda-key="${safeName}" value="${esc(safeVal)}" />${warning}`;
+    case 'duration':
+      return `<input type="text" class="tdr-uda-typed-input" data-uda-key="${safeName}" value="${esc(safeVal)}" placeholder="e.g. 2h, 30m, 1d" />${warning}`;
+    case 'string':
+    default:
+      if (definition.allowedValues && definition.allowedValues.length > 0) {
+        const opts = definition.allowedValues.map(v =>
+          `<option value="${esc(v)}" ${v === safeVal ? 'selected' : ''}>${esc(v)}</option>`
+        ).join('');
+        return `<select class="tdr-uda-typed-select" data-uda-key="${safeName}"><option value="">—</option>${opts}</select>${warning}`;
+      }
+      return `<input type="text" class="tdr-uda-typed-input" data-uda-key="${safeName}" value="${esc(safeVal)}" />${warning}`;
+  }
+}
+
+/**
+ * Checks if a value matches the expected type.
+ */
+function matchesType(type, value, allowedValues) {
+  if (!value) return true;
+  switch (type) {
+    case 'numeric': {
+      const n = parseFloat(value);
+      return !isNaN(n) && isFinite(n);
+    }
+    case 'date': {
+      const d = new Date(value);
+      return !isNaN(d.getTime());
+    }
+    case 'duration':
+      return /^\d+(\.\d+)?[hmHMdDwW]$/.test(value);
+    case 'string':
+      if (allowedValues && allowedValues.length > 0) {
+        return allowedValues.includes(value);
+      }
+      return true;
+    default:
+      return true;
+  }
 }

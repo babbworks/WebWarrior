@@ -15,7 +15,7 @@ const COMM_PROFILE = '__community__';
 // via a separate database 'ww_community' at db version 1.
 
 const COMM_DB_NAME = 'ww_community';
-const COMM_DB_VERSION = 1;
+const COMM_DB_VERSION = 2;
 
 let _commDb = null;
 
@@ -34,6 +34,10 @@ async function getCommDb() {
       }
       if (!db.objectStoreNames.contains('comments')) {
         const s = db.createObjectStore('comments', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('entry', 'entry_id', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('private_notes')) {
+        const s = db.createObjectStore('private_notes', { keyPath: 'id', autoIncrement: true });
         s.createIndex('entry', 'entry_id', { unique: false });
       }
     };
@@ -182,6 +186,32 @@ export async function addComment(entryId, body, profile) {
 
 export async function deleteComment(commentId) {
   return txn(['comments'], 'readwrite', t => storeDel(t, 'comments', commentId));
+}
+
+// ── Private Notes ─────────────────────────────────────────────────────────────
+// Private notes are local-only annotations that never get shared or exported
+// with the community entry content.
+
+export async function getPrivateNotes(entryId) {
+  const allNotes = await txn(['private_notes'], 'readonly', t => storeAll(t, 'private_notes'));
+  return allNotes
+    .filter(n => n.entry_id === entryId)
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+}
+
+export async function addPrivateNote(entryId, body, profile) {
+  return txn(['private_notes'], 'readwrite', t =>
+    storePut(t, 'private_notes', {
+      entry_id:   entryId,
+      body,
+      profile,
+      created_at: new Date().toISOString(),
+    })
+  );
+}
+
+export async function deletePrivateNote(noteId) {
+  return txn(['private_notes'], 'readwrite', t => storeDel(t, 'private_notes', noteId));
 }
 
 // ── Cross-posting helpers ─────────────────────────────────────────────────────

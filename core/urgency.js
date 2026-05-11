@@ -1,8 +1,16 @@
 // Taskwarrior urgency formula — pure function, no side effects
 
+import { computeUdaUrgency } from '../services/attributes/index.js';
+
 const PRIORITY_WEIGHTS = { H: 1.0, M: 0.65, L: 0.25, '': 0 };
 
-export function computeUrgency(task) {
+const STANDARD_TASK_KEYS = new Set([
+  'uuid', 'status', 'description', 'project', 'tags', 'priority',
+  'due', 'scheduled', 'wait', 'start', 'end', 'depends',
+  'annotations', 'urgency', 'modified', 'entry', 'taskList'
+]);
+
+export function computeUrgency(task, udaDefinitions = []) {
   let u = 0;
 
   // Due date factor (max 12)
@@ -40,6 +48,15 @@ export function computeUrgency(task) {
 
   // Wait — reduce urgency if waiting
   if (task.wait && new Date(task.wait) > new Date()) u -= 3.0;
+
+  // UDA urgency contributions
+  for (const key of Object.keys(task)) {
+    if (STANDARD_TASK_KEYS.has(key)) continue;
+    const def = udaDefinitions.find(d => d.name === key);
+    if (def && def.urgencyCoefficient !== 0) {
+      u += computeUdaUrgency(def, task[key]);
+    }
+  }
 
   return Math.round(u * 100) / 100;
 }

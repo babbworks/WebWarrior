@@ -34,10 +34,16 @@
       <div class="sidebar-header">
         <span class="wordmark-ww" id="btn-nav-warrior">ww</span>
         <span class="wordmark-full">webwarrior</span>
+        <div class="sidebar-header-controls">
+          <button class="stream-topbar-btn" id="btn-stream-toggle-top" title="Stream on/off">≋</button>
+          <canvas class="stream-mini-waveform" id="stream-mini-waveform" width="60" height="16" title="Live Dey signal"></canvas>
+          <button class="bridge-icon" id="btn-bridge-icon" title="Works Bridge">⬡</button>
+        </div>
       </div>
       <div class="profile-row">
         <div class="profile-pill" id="profile-pill">—</div>
         <button class="profile-info-btn" id="btn-profile-screen" title="Profile info">P</button>
+        <button class="profile-info-btn" id="btn-nav-next" data-section="next" title="Next — recommended task">▶</button>
         <ul class="profile-switcher hidden" id="profile-switcher"></ul>
       </div>
       <div class="cmd-ctrl-row">
@@ -51,20 +57,23 @@
         <button class="nav-item" data-section="journal"><span class="nav-icon icon-journal">╱</span><span class="nav-label">Journals</span></button>
         <button class="nav-item" data-section="ledger"><span class="nav-icon icon-ledger">═</span><span class="nav-label">Ledgers</span></button>
         <button class="nav-item" data-section="lists"><span class="nav-icon">•</span><span class="nav-label">Lists</span></button>
-        <button class="nav-item" data-section="tags"><span class="nav-icon">⌗</span><span class="nav-label">Tags</span></button>
+        <button class="nav-item" data-section="attributes"><span class="nav-icon">⊕</span><span class="nav-label">Atts</span></button>
         <div class="nav-divider"></div>
-        <div class="nav-group-label">workspace</div>
-        <button class="nav-item" data-section="next"><span class="nav-icon">▶</span><span class="nav-label">Next</span></button>
-        <button class="nav-item" data-section="warrior"><span class="nav-icon">✱</span><span class="nav-label">Warrior</span></button>
-        <button class="nav-item" data-section="community"><span class="nav-icon">◎</span><span class="nav-label">Community</span></button>
-        <button class="nav-item" data-section="questions"><span class="nav-icon">？</span><span class="nav-label">Questions</span></button>
         <button class="nav-item" data-section="projects"><span class="nav-icon">◆</span><span class="nav-label">Projects</span></button>
+        <button class="nav-item" data-section="tags"><span class="nav-icon">⌗</span><span class="nav-label">Tags</span></button>
+        <button class="nav-item" data-section="viz"><span class="nav-icon">◫</span><span class="nav-label">Viz</span></button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" data-section="community"><span class="nav-icon">◎</span><span class="nav-label">Communities</span></button>
+        <div class="nav-group-label">workspace</div>
+        <button class="nav-item" data-section="stream" id="nav-stream"><span class="nav-icon">≋</span><span class="nav-label">Stream</span></button>
+        <button class="nav-item" data-section="bridge"><span class="nav-icon">⬡</span><span class="nav-label">Bridge</span></button>
+        <button class="nav-item" data-section="questions"><span class="nav-icon">？</span><span class="nav-label">Questions</span></button>
         <button class="nav-item" data-section="export"><span class="nav-icon">⤓</span><span class="nav-label">Export</span></button>
       </nav>
       <div class="sidebar-footer" id="sidebar-footer">
-        <div class="warrior-stats" id="warrior-stats">
+        <div class="warrior-stats" id="warrior-stats" data-section="warrior" style="cursor:pointer">
           <span class="warrior-icon">✱</span>
-          <span class="warrior-label" id="warrior-label">Webwarrior</span>
+          <span class="warrior-label" id="warrior-label">Warrior</span>
           <span class="warrior-count" id="warrior-count"></span>
         </div>
         <div class="density-control">
@@ -84,6 +93,7 @@
         <div class="header-row1">
           <div class="header-title-group">
             <span id="section-title">Tasks</span>
+            <button class="fn-info-header-btn" id="btn-fn-info" title="About this function">ⓘ</button>
             <div id="header-resource-slot" class="header-resource-slot">
 
               <!-- Tasks sub-list -->
@@ -119,6 +129,24 @@
                 <button class="resource-add-btn resource-del-btn" id="btn-delete-list" title="Delete this list">✗</button>
               </div>
 
+              <!-- Community -->
+              <div class="resource-bar-inner hidden" data-resource-section="community">
+                <select id="community-header-select" class="resource-select" title="Active collection"></select>
+                <button class="resource-add-btn" id="btn-new-community-header">+ collection</button>
+                <button class="resource-add-btn resource-del-btn" id="btn-archive-community-header" title="Archive this collection">→ archive</button>
+              </div>
+
+              <!-- Questions -->
+              <div class="resource-bar-inner hidden" data-resource-section="questions">
+                <select id="q-list-select" class="resource-select" title="Question list"></select>
+                <button class="resource-add-btn" id="btn-new-q-list">+ list</button>
+                <button class="resource-add-btn resource-del-btn" id="btn-del-q-list" title="Delete this list">✗</button>
+              </div>
+
+            </div>
+            <div class="header-sync-controls">
+              <button class="header-sync-btn header-sync-highlight" id="btn-create-subprofile" title="Create sub-profile (task list + journal + time log + ledger + list)">⊞</button>
+              <button class="header-sync-btn header-sync-highlight" id="btn-sync-functions" title="Sync all functions to current sub-list">⟳</button>
             </div>
           </div>
           <div class="header-stats">
@@ -146,6 +174,34 @@
 
         <!-- Tasks -->
         <section class="section" id="section-tasks">
+          <div class="fn-info-panel hidden" id="fn-info-tasks">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://taskwarrior.org" target="_blank">Taskwarrior</a> · <a href="https://github.com/GothenburgBitFactory/taskwarrior" target="_blank">GitHub</a> · MIT License</span>
+              <button class="fn-info-close" data-fn-info-close="tasks">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Task Management</h3>
+              <p>Full-featured task tracking with <strong>urgency scoring</strong> that automatically prioritizes your work based on due dates, priority, age, and custom weights.</p>
+              <ul>
+                <li><strong>UDAs</strong> — User Defined Attributes let you add custom fields (cost, client, sprint, etc.)</li>
+                <li><strong>Projects &amp; Tags</strong> — Organize tasks hierarchically with projects and flexibly with tags</li>
+                <li><strong>Annotations</strong> — Attach timestamped notes to any task</li>
+                <li><strong>Dependencies</strong> — Define task relationships and blocking chains</li>
+                <li><strong>Bulk Operations</strong> — Multi-select tasks for batch edits, done, delete, or tag operations</li>
+                <li><strong>Sub-profiles</strong> — Maintain separate task lists (work, personal, freelance)</li>
+              </ul>
+              <h3>Inline Drop Actions</h3>
+              <p>Each task row supports quick actions: <code>annotate</code>, <code>journal</code> (cross-post to Journal), <code>dep</code> (add dependency), and <code>comm</code> (share to Community).</p>
+              <h3>Cross-Service Integration</h3>
+              <ul>
+                <li><strong>Time</strong> — Starting a task auto-starts time tracking; stopping time logs against the task</li>
+                <li><strong>Journal</strong> — Cross-post task notes as journal entries; journal entries link back to tasks</li>
+                <li><strong>Ledger</strong> — Track costs per task via UDA cost fields that feed into Ledger reports</li>
+                <li><strong>Community</strong> — Share tasks or request help via the community drop action</li>
+              </ul>
+              <p>The <strong>Task Drawer</strong> provides an expanded view with full history, all annotations, time logs, and related journal entries for any task.</p>
+            </div>
+          </div>
           <form class="add-form-inline" id="add-task-form">
             <input type="text" name="description" placeholder="Add task…" autocomplete="off" />
             <input type="text" name="project" placeholder="project" />
@@ -162,6 +218,7 @@
             <button class="btn-toolbar" id="btn-group-toggle" title="Group tasks by project">projects</button>
             <button class="btn-toolbar" id="btn-show-done-tasks" title="Show completed tasks">done</button>
             <button class="btn-toolbar" id="btn-ann-toggle" title="Toggle annotations">ann</button>
+            <button class="btn-toolbar" id="btn-compact-toggle" title="Compact view">compact</button>
           </div>
           <div id="bulk-toolbar" class="hidden">
             <label class="bulk-select-all"><input type="checkbox" id="bulk-select-all" /> all</label>
@@ -184,6 +241,29 @@
 
         <!-- Times -->
         <section class="section hidden" id="section-time">
+          <div class="fn-info-panel hidden" id="fn-info-time">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://timewarrior.org" target="_blank">Timewarrior</a> · <a href="https://github.com/GothenburgBitFactory/timewarrior" target="_blank">GitHub</a> · MIT License</span>
+              <button class="fn-info-close" data-fn-info-close="time">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Time Tracking</h3>
+              <p>Track time with <strong>start/stop</strong> or <strong>manual duration entry</strong>. Every interval is tagged for flexible reporting.</p>
+              <ul>
+                <li><strong>Tags</strong> — Categorize time entries (dev, review, meeting, admin)</li>
+                <li><strong>Time Logs</strong> — Sub-profiles let you maintain separate time logs per context</li>
+                <li><strong>Weekly Charts</strong> — Visual breakdown of time spent by day and tag</li>
+                <li><strong>Tag Summaries</strong> — Aggregate reports showing total time per tag over any period</li>
+                <li><strong>Duration Entry</strong> — Manually log past time with start/end or duration</li>
+              </ul>
+              <h3>Cross-Service Integration</h3>
+              <ul>
+                <li><strong>Tasks</strong> — Starting a task auto-starts a time interval; task completion stops the clock</li>
+                <li><strong>Journal</strong> — Time-to-journal action creates a journal entry summarizing tracked time</li>
+                <li><strong>Projects</strong> — Time data feeds into Project cards showing total hours per project</li>
+              </ul>
+            </div>
+          </div>
           <form class="add-form-inline" id="add-time-form">
             <input type="text" name="tags" id="timew-tag-input" placeholder="tags (e.g. dev review)" autocomplete="off" style="width:200px" />
             <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:140px" />
@@ -209,6 +289,32 @@
 
         <!-- Journals -->
         <section class="section hidden" id="section-journal">
+          <div class="fn-info-panel hidden" id="fn-info-journal">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://jrnl.sh" target="_blank">jrnl</a> · <a href="https://github.com/jrnl-org/jrnl" target="_blank">GitHub</a> · GPL License</span>
+              <button class="fn-info-close" data-fn-info-close="journal">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Journaling</h3>
+              <p>Structured journaling with <strong>entries, annotations, tags, and priorities</strong>. Supports markdown rendering and full-text search.</p>
+              <ul>
+                <li><strong>Entries</strong> — Timestamped journal entries with title and body</li>
+                <li><strong>Projects &amp; Sections</strong> — Organize entries by project or custom sections</li>
+                <li><strong>Tags &amp; Priorities</strong> — Flexible categorization and importance levels</li>
+                <li><strong>Multiple Journals</strong> — Sub-profiles for separate journals (work log, personal diary, research notes)</li>
+                <li><strong>Markdown Rendering</strong> — Full markdown support with live preview</li>
+                <li><strong>Archiving</strong> — Archive old entries to keep your active journal focused</li>
+              </ul>
+              <h3>Twain Theme</h3>
+              <p>A focused writing mode with a <strong>scratch pad</strong> for quick notes and <strong>river mode</strong> for distraction-free continuous writing.</p>
+              <h3>Cross-Service Integration</h3>
+              <ul>
+                <li><strong>Tasks</strong> — Cross-post journal entries to tasks; task annotations appear in journal</li>
+                <li><strong>Community</strong> — Share journal entries or excerpts to the community feed</li>
+                <li><strong>Projects</strong> — Journal entries appear in Project cards as activity logs</li>
+              </ul>
+            </div>
+          </div>
           <span id="twain-datetime" class="twain-datetime"></span>
           <form class="add-form-inline add-form-journal" id="add-journal-form">
             <div class="twain-writing-wrap">
@@ -319,6 +425,30 @@
 
         <!-- Ledgers -->
         <section class="section hidden" id="section-ledger">
+          <div class="fn-info-panel hidden" id="fn-info-ledger">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://hledger.org" target="_blank">hledger</a> · <a href="https://github.com/simonmichael/hledger" target="_blank">GitHub</a> · GPL License</span>
+              <button class="fn-info-close" data-fn-info-close="ledger">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Double-Entry Accounting</h3>
+              <p>Plain-text <strong>double-entry bookkeeping</strong> with transactions, postings, and a full account hierarchy.</p>
+              <ul>
+                <li><strong>Transactions</strong> — Date, description, and balanced postings across accounts</li>
+                <li><strong>Postings</strong> — Each transaction moves money between two or more accounts</li>
+                <li><strong>Account Hierarchy</strong> — Nested accounts (expenses:food:groceries) for detailed categorization</li>
+                <li><strong>Balance Report</strong> — Current balances across all accounts</li>
+                <li><strong>Register Report</strong> — Chronological transaction history with running totals</li>
+                <li><strong>Income Statement</strong> — Revenue vs. expenses over a period</li>
+                <li><strong>Multiple Ledgers</strong> — Sub-profiles for separate books (personal, business, project)</li>
+              </ul>
+              <h3>Cross-Service Integration</h3>
+              <ul>
+                <li><strong>Tasks</strong> — Task UDA cost fields feed into ledger as expense postings</li>
+                <li><strong>Projects</strong> — Ledger data appears in Project cards showing budget vs. actual spend</li>
+              </ul>
+            </div>
+          </div>
           <form class="add-form-inline" id="add-ledger-form">
             <input type="date" name="date" />
             <input type="text" name="description" placeholder="Add transaction…" autocomplete="off" />
@@ -353,6 +483,24 @@
 
         <!-- Tags -->
         <section class="section hidden" id="section-tags">
+          <div class="fn-info-panel hidden" id="fn-info-tags">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Tag-based organization across all tasks</span>
+              <button class="fn-info-close" data-fn-info-close="tags">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Tags</h3>
+              <p>Tags provide <strong>flexible, non-hierarchical grouping</strong> across your tasks. Unlike projects (one per task), a task can have many tags.</p>
+              <ul>
+                <li><strong>Overview</strong> — See all tags with task counts and latest activity dates</li>
+                <li><strong>Expand</strong> — Click any tag to see its associated tasks inline</li>
+                <li><strong>Sort</strong> — Order by name, most tasks, or fewest tasks</li>
+                <li><strong>Filter</strong> — Search tags by name to find specific groupings</li>
+              </ul>
+              <h3>Usage</h3>
+              <p>Add tags to tasks via the task form or drawer (comma or space separated). Tags appear as badges on task rows and can be used for time tracking and journal filtering.</p>
+            </div>
+          </div>
           <div class="section-toolbar">
             <input type="text" id="tags-filter" class="inline-filter" placeholder="filter tags…" />
             <select id="tags-sort" class="toolbar-select-sm">
@@ -365,8 +513,321 @@
           <div id="tags-body"><div class="skeleton-msg">Loading…</div></div>
         </section>
 
+        <!-- Viz -->
+        <section class="section hidden" id="section-viz">
+          <div class="section-toolbar">
+            <select id="viz-lens-select" class="toolbar-select-sm">
+              <option value="burroughs">Burroughs</option>
+              <option value="bundy">Bundy</option>
+              <option value="frick">Frick</option>
+              <option value="felt">Felt</option>
+              <option value="dey">Dey</option>
+              <option value="cooper">Cooper</option>
+            </select>
+            <select id="viz-time-select" class="toolbar-select-sm">
+              <option value="hour">1h</option>
+              <option value="4hours">4h</option>
+              <option value="day">24h</option>
+              <option value="week">7d</option>
+              <option value="all">All</option>
+              <option value="custom">Custom</option>
+            </select>
+            <button id="viz-mode-toggle" class="btn-toolbar" title="Toggle ASCII/Canvas">◨</button>
+            <button id="viz-refresh-btn" class="btn-toolbar" title="Refresh">↻</button>
+          </div>
+          <div id="viz-custom-range" class="hidden">
+            <input type="datetime-local" id="viz-from" />
+            <input type="datetime-local" id="viz-to" />
+            <button id="viz-apply-range" class="btn-toolbar">Apply</button>
+          </div>
+          <div id="viz-filters" class="viz-filter-bar">
+            <input type="text" id="viz-filter-service" class="inline-filter" placeholder="service…" />
+            <input type="text" id="viz-filter-project" class="inline-filter" placeholder="project…" />
+            <input type="text" id="viz-filter-tags" class="inline-filter" placeholder="tags…" />
+          </div>
+          <div id="viz-active-filters" class="viz-badges"></div>
+          <div id="viz-preset-bar" class="viz-preset-bar">
+            <select id="viz-preset-select" class="toolbar-select-sm">
+              <option value="">— presets —</option>
+            </select>
+            <button id="viz-preset-save" class="btn-toolbar" title="Save preset">💾</button>
+            <button id="viz-preset-delete" class="btn-toolbar" title="Delete preset">🗑</button>
+          </div>
+          <div id="viz-lens-card-wrapper"></div>
+          <div id="viz-gallery-panel" class="viz-gallery-panel"></div>
+          <div id="viz-empty-state" class="skeleton-msg hidden">No data available for this lens and time range.</div>
+          <div id="viz-disabled-state" class="skeleton-msg hidden">Stream is disabled. Enable Stream in Settings to use Viz.</div>
+          <div id="viz-error-state" class="skeleton-msg hidden"></div>
+        </section>
+
+        <!-- Attributes -->
+        <section class="section hidden" id="section-attributes">
+          <div class="fn-info-panel hidden" id="fn-info-attributes">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://taskwarrior.org/docs/udas/" target="_blank">Taskwarrior UDAs</a> · User Defined Attributes</span>
+              <button class="fn-info-close" data-fn-info-close="attributes">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Attributes (UDAs)</h3>
+              <p>User Defined Attributes extend your tasks with <strong>custom fields</strong> — track anything beyond the built-in task properties.</p>
+              <ul>
+                <li><strong>Typed Fields</strong> — String, numeric, date, and duration types with validation</li>
+                <li><strong>Allowed Values</strong> — Constrain string attributes to a predefined set (renders as dropdown)</li>
+                <li><strong>Urgency Coefficients</strong> — Attributes can influence task urgency scoring automatically</li>
+                <li><strong>Groups</strong> — Organize attributes into logical groups for clarity</li>
+                <li><strong>Templates</strong> — Import pre-built attribute packs (Agile, GTD, Freelance, etc.)</li>
+                <li><strong>Cross-Profile</strong> — Assign attributes to other profiles for consistent schemas</li>
+                <li><strong>Read-Only</strong> — Lock attributes after initial assignment to prevent accidental edits</li>
+              </ul>
+              <h3>How It Works</h3>
+              <p>Define attributes here, then assign values on individual tasks via the Task Drawer. Attributes appear as editable fields with type-appropriate inputs.</p>
+              <h3>Urgency Integration</h3>
+              <p>Each attribute can carry an <strong>urgency coefficient</strong>. The formula is: <code>contribution = coefficient × normalized_value</code>. This feeds into the global urgency score that prioritizes your task list.</p>
+            </div>
+          </div>
+          <div class="attr-tabs">
+            <button class="attr-tab active" data-attr-view="current">Current Attributes</button>
+            <button class="attr-tab" data-attr-view="templates">Templates</button>
+          </div>
+          <!-- Current Attributes view -->
+          <div id="attr-view-current" class="attr-view">
+            <div class="attr-toolbar">
+              <input type="text" id="attr-search" class="inline-filter" placeholder="search attributes…" autocomplete="off" />
+              <button class="btn-inline-alt" id="btn-add-attr">+ Add</button>
+              <button class="btn-inline-alt" id="btn-import-attr-csv">Import CSV</button>
+              <button class="btn-inline-alt" id="btn-export-attr-csv">Export All</button>
+              <button class="btn-inline-alt" id="btn-build-group">Build Group</button>
+              <button class="attr-help-btn" id="btn-attr-help" title="How Attributes work" style="margin-left:auto">?</button>
+            </div>
+            <div id="attr-add-form" class="attr-add-form hidden">
+              <div class="attr-form-grid">
+                <label>name</label><input type="text" id="attr-name" placeholder="attribute_name" autocomplete="off" />
+                <label>label</label><input type="text" id="attr-label" placeholder="Display Label" autocomplete="off" />
+                <label>type</label><select id="attr-type"><option value="string">string</option><option value="numeric">numeric</option><option value="date">date</option><option value="duration">duration</option></select>
+                <label>default</label><input type="text" id="attr-default" placeholder="default value" autocomplete="off" />
+                <label>allowed</label><input type="text" id="attr-allowed" placeholder="val1, val2, val3 (comma-separated)" autocomplete="off" />
+                <label>urgency <button type="button" class="attr-help-btn" id="btn-attr-urgency-help" title="How urgency coefficients work">?</button></label>
+                <input type="number" id="attr-urgency" step="0.1" value="0" />
+                <label></label><span class="attr-urgency-hint">Multiplies the attribute's normalized score to influence task urgency. Higher = stronger effect.</span>
+                <label>read-only</label><label class="attr-checkbox-label"><input type="checkbox" id="attr-readonly" /> Lock after assignment</label>
+              </div>
+              <div class="attr-form-actions">
+                <button class="btn-inline-submit" id="btn-attr-save">Save</button>
+                <button class="btn-inline-alt" id="btn-attr-cancel">Cancel</button>
+              </div>
+            </div>
+            <div id="attr-list"><div class="skeleton-msg">No attributes defined.</div></div>
+          </div>
+          <!-- Templates view -->
+          <div id="attr-view-templates" class="attr-view hidden">
+            <div class="attr-templates-title">Attribute Template Packs</div>
+            <div id="attr-templates-list"></div>
+          </div>
+          <!-- Urgency help overlay -->
+          <div id="attr-urgency-overlay" class="attr-urgency-overlay hidden">
+            <div class="attr-urgency-overlay-inner">
+              <div class="attr-urgency-overlay-title">Urgency Coefficient — How It Works</div>
+              <div class="attr-urgency-overlay-body">
+                <p><strong>Formula:</strong> contribution = coefficient × normalized_value</p>
+                <p><strong>Normalization by type:</strong></p>
+                <ul>
+                  <li><strong>numeric</strong> — raw numeric value (e.g., value=5, coeff=1.5 → +7.5 urgency)</li>
+                  <li><strong>string (with allowed values)</strong> — positional index ÷ total count (e.g., "bug" at index 1 of 4 → 0.25 × coeff)</li>
+                  <li><strong>string (free text)</strong> — 1 if non-empty, 0 if empty</li>
+                  <li><strong>date</strong> — days until date ÷ 365, clamped to 0–1</li>
+                  <li><strong>duration</strong> — parsed hours ÷ 24</li>
+                </ul>
+                <p>A coefficient of <strong>0</strong> means no urgency contribution. Negative coefficients reduce urgency.</p>
+              </div>
+              <button class="btn-inline-alt" id="btn-attr-urgency-close">Close</button>
+            </div>
+          </div>
+          <!-- Attributes help overlay -->
+          <div id="attr-help-overlay" class="attr-urgency-overlay hidden">
+            <div class="attr-urgency-overlay-inner" style="max-width:600px;max-height:80vh;overflow-y:auto">
+              <div class="attr-urgency-overlay-title">Attributes (Atts) — Guide</div>
+              <div class="attr-urgency-overlay-body">
+                <p><strong>What are Attributes?</strong></p>
+                <p>Attributes are User Defined fields you attach to tasks. They extend the built-in fields (description, project, tags, priority, due) with any metadata your workflow needs — estimates, categories, risk levels, costs, contacts, etc.</p>
+
+                <p><strong>Types</strong></p>
+                <ul>
+                  <li><strong>string</strong> — free text or constrained to allowed values (dropdown)</li>
+                  <li><strong>numeric</strong> — numbers (integers or decimals)</li>
+                  <li><strong>date</strong> — ISO dates (rendered as date picker)</li>
+                  <li><strong>duration</strong> — time spans like 2h, 30m, 1d, 1w</li>
+                </ul>
+
+                <p><strong>Groups</strong></p>
+                <p>Attributes can be organized into groups (e.g., "Financial", "Development", "People"). Use the Group Builder for rapid creation, or assign/reassign via the dropdown on each attribute card.</p>
+
+                <p><strong>Urgency Coefficients</strong></p>
+                <p>Each attribute can influence task urgency scoring. The formula is: <code>contribution = coefficient × normalized_value</code>. A coefficient of 0 means no effect. See the ⚡ icon on attributes that affect urgency.</p>
+
+                <p><strong>Importing (CSV Format)</strong></p>
+                <p>Import attributes via CSV — one per line, 8 fields:</p>
+                <p><code>name,label,type,default,allowed_values,urgency_coefficient,read_only,group</code></p>
+                <p>Examples:</p>
+                <pre style="background:var(--bg);padding:8px;border-radius:3px;font-size:11px;overflow-x:auto">estimate,Estimate,numeric,,,0,false,Development
+category,Category,string,general,general|bug|feature|chore,0.8,false,Project Management
+reviewby,Review By,date,,,2.0,false,Dates</pre>
+                <p><strong>Notes on CSV:</strong></p>
+                <ul>
+                  <li>Allowed values use <code>|</code> (pipe) separator within the field</li>
+                  <li>The 8th field (group) is optional — omit it to leave ungrouped</li>
+                  <li>Missing fields default to: empty string, 0 coefficient, false read-only</li>
+                  <li>Import multiple lines at once — each line creates one attribute</li>
+                </ul>
+
+                <p><strong>Template Packs</strong></p>
+                <p>Pre-built collections of attributes for common workflows (Project Management, Development, GitHub, Financial, etc.). Import a pack to instantly add a curated group of attributes to your profile.</p>
+
+                <p><strong>Profile Assignment</strong></p>
+                <p>Attributes are per-profile. Use the → button to copy attributes or entire groups to other profiles. Already-assigned attributes show a ✓ checkmark.</p>
+
+                <p><strong>Task Integration</strong></p>
+                <p>Once defined, attributes appear in the Task Drawer with type-appropriate inputs (dropdowns for allowed values, date pickers, number fields). Read-only attributes display as locked text.</p>
+              </div>
+              <button class="btn-inline-alt" id="btn-attr-help-close">Close</button>
+            </div>
+          </div>
+          <!-- Profile assignment popup -->
+          <div id="attr-profile-popup" class="attr-profile-popup hidden">
+            <div class="attr-profile-popup-inner">
+              <div class="attr-profile-popup-title">Assign to Profile</div>
+              <div class="attr-profile-popup-subtitle" id="attr-profile-popup-info"></div>
+              <div class="attr-profile-popup-list" id="attr-profile-popup-list"></div>
+              <div class="attr-profile-popup-actions">
+                <button class="btn-inline-submit" id="btn-attr-profile-assign">Assign Selected</button>
+                <button class="btn-inline-alt" id="btn-attr-profile-cancel">Cancel</button>
+              </div>
+            </div>
+          </div>
+          <!-- Attribute detail drawer -->
+          <div id="attr-drawer" class="task-drawer hidden" aria-hidden="true">
+            <div class="task-drawer-backdrop" id="attr-drawer-backdrop"></div>
+            <div class="task-drawer-panel" role="dialog" aria-label="Attribute detail">
+              <div class="tdr-header">
+                <div class="tdr-header-left">
+                  <span class="tdr-header-title" id="attr-drawer-title">Attribute</span>
+                </div>
+                <button class="tdr-close" id="attr-drawer-close">✕</button>
+              </div>
+              <div class="tdr-body" style="padding:16px">
+                <div class="attr-form-grid">
+                  <label>name</label><input type="text" id="atd-name" class="tdr-input" autocomplete="off" />
+                  <label>label</label><input type="text" id="atd-label" class="tdr-input" autocomplete="off" />
+                  <label>type</label><select id="atd-type" class="tdr-input tdr-select"><option value="string">string</option><option value="numeric">numeric</option><option value="date">date</option><option value="duration">duration</option></select>
+                  <label>default</label><input type="text" id="atd-default" class="tdr-input" autocomplete="off" />
+                  <label>allowed values</label><input type="text" id="atd-allowed" class="tdr-input" placeholder="comma-separated" autocomplete="off" />
+                  <label>group</label><input type="text" id="atd-group" class="tdr-input" autocomplete="off" />
+                  <label>urgency coeff.</label><input type="number" id="atd-urgency" class="tdr-input" step="0.1" />
+                  <label></label><span class="attr-urgency-hint">Multiplies normalized score to influence task urgency.</span>
+                  <label>read-only</label><label class="attr-checkbox-label"><input type="checkbox" id="atd-readonly" /> Lock after assignment</label>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:14px">
+                  <button class="btn-inline-submit" id="btn-atd-save">Save</button>
+                  <button class="btn-inline-alt" id="btn-atd-delete" style="color:var(--error);border-color:var(--error)">Delete</button>
+                </div>
+                <!-- Tasks using this attribute -->
+                <div id="atd-tasks-container" class="atd-tasks-section"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Template pack detail drawer -->
+          <div id="attr-pack-drawer" class="task-drawer hidden" aria-hidden="true">
+            <div class="task-drawer-backdrop" id="attr-pack-backdrop"></div>
+            <div class="task-drawer-panel" role="dialog" aria-label="Template pack detail">
+              <div class="tdr-header">
+                <div class="tdr-header-left">
+                  <span class="tdr-header-title" id="attr-pack-title">Template Pack</span>
+                  <span id="attr-pack-desc" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+                </div>
+                <button class="tdr-close" id="attr-pack-close">✕</button>
+              </div>
+              <div class="tdr-body" style="padding:16px">
+                <div id="attr-pack-items"></div>
+                <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+                  <button class="btn-inline-alt" id="btn-pack-edit">✎ Edit Pack</button>
+                  <span id="attr-pack-edit-warning" class="hidden" style="font-size:10px;color:var(--warning)">⚠ Editing modifies global template packs (saved to this browser).</span>
+                </div>
+                <div id="attr-pack-edit-form" class="hidden" style="margin-top:10px">
+                  <textarea id="attr-pack-csv" class="tan-textarea" rows="8" placeholder="One attribute per line (CSV format)"></textarea>
+                  <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="btn-inline-submit" id="btn-pack-save-edits">Save Changes</button>
+                    <button class="btn-inline-alt" id="btn-pack-cancel-edits">Cancel</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Group Builder drawer -->
+          <div id="attr-group-builder" class="task-drawer hidden" aria-hidden="true">
+            <div class="task-drawer-backdrop" id="attr-gb-backdrop"></div>
+            <div class="task-drawer-panel" role="dialog" aria-label="Group Builder">
+              <div class="tdr-header">
+                <div class="tdr-header-left">
+                  <span class="tdr-header-title">Group Builder</span>
+                </div>
+                <button class="tdr-close" id="attr-gb-close">✕</button>
+              </div>
+              <div class="tdr-body" style="padding:16px">
+                <div class="attr-gb-top">
+                  <input type="text" id="attr-gb-group-name" class="tdr-input" placeholder="Group name…" style="flex:1" autocomplete="off" />
+                  <div class="attr-gb-mode-toggle">
+                    <button class="attr-gb-mode-btn active" data-gb-mode="quick">Quick</button>
+                    <button class="attr-gb-mode-btn" data-gb-mode="detailed">Detailed</button>
+                  </div>
+                </div>
+                <div class="attr-gb-actions">
+                  <button class="btn-inline-submit" id="btn-gb-save-close">Save &amp; Close</button>
+                  <button class="btn-inline-alt" id="btn-gb-add-next">Add Next</button>
+                  <span class="attr-gb-count" id="attr-gb-count">0 added</span>
+                </div>
+                <!-- Quick mode input -->
+                <div id="attr-gb-quick" class="attr-gb-input-card">
+                  <input type="text" id="attr-gb-quick-name" class="tdr-input" placeholder="attribute_name (Enter to add)" autocomplete="off" style="width:100%" />
+                </div>
+                <!-- Detailed mode input -->
+                <div id="attr-gb-detailed" class="attr-gb-input-card hidden">
+                  <div class="attr-form-grid">
+                    <label>name</label><input type="text" id="attr-gb-d-name" class="tdr-input" autocomplete="off" />
+                    <label>label</label><input type="text" id="attr-gb-d-label" class="tdr-input" autocomplete="off" />
+                    <label>type</label><select id="attr-gb-d-type" class="tdr-input tdr-select"><option value="string">string</option><option value="numeric">numeric</option><option value="date">date</option><option value="duration">duration</option></select>
+                    <label>default</label><input type="text" id="attr-gb-d-default" class="tdr-input" autocomplete="off" />
+                    <label>allowed</label><input type="text" id="attr-gb-d-allowed" class="tdr-input" placeholder="comma-separated" autocomplete="off" />
+                    <label>urgency</label><input type="number" id="attr-gb-d-urgency" class="tdr-input" step="0.1" value="0" />
+                    <label>read-only</label><label class="attr-checkbox-label"><input type="checkbox" id="attr-gb-d-readonly" /> Lock</label>
+                  </div>
+                </div>
+                <!-- Running list of added items -->
+                <div class="attr-gb-list-title">Added:</div>
+                <div id="attr-gb-list" class="attr-gb-list"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- Projects -->
         <section class="section hidden" id="section-projects">
+          <div class="fn-info-panel hidden" id="fn-info-projects">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Cross-function project aggregation</span>
+              <button class="fn-info-close" data-fn-info-close="projects">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Projects</h3>
+              <p>Projects aggregate data from <strong>all five functions</strong> — tasks, time, journal, ledger, and lists — into a unified view per project.</p>
+              <ul>
+                <li><strong>Progress</strong> — Visual progress bar showing pending vs completed tasks</li>
+                <li><strong>Next Task</strong> — Highest-urgency pending task highlighted at the top</li>
+                <li><strong>Cross-Function</strong> — See journal entries, ledger transactions, and time tracked for each project</li>
+                <li><strong>Clickable Items</strong> — Click any item to navigate to its source and open its detail drawer</li>
+              </ul>
+              <h3>How It Works</h3>
+              <p>Assign a project name to tasks, journal entries, or ledger comments. The Projects screen automatically discovers and groups all items sharing that project name.</p>
+            </div>
+          </div>
           <form class="add-form-inline" id="project-create-form">
             <input type="text" name="name" placeholder="project name" autocomplete="off" style="width:140px" />
             <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:120px" />
@@ -380,6 +841,27 @@
 
         <!-- Lists -->
         <section class="section hidden" id="section-lists">
+          <div class="fn-info-panel hidden" id="fn-info-lists">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Inspired by <a href="https://github.com/sjl/t" target="_blank">t · sjl/t</a> · MIT License</span>
+              <button class="fn-info-close" data-fn-info-close="lists">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Simple List Management</h3>
+              <p>Lightweight lists for quick capture — <strong>items, done/undone, multiple lists</strong>. No overhead, just check things off.</p>
+              <ul>
+                <li><strong>Items</strong> — Add items instantly with minimal friction</li>
+                <li><strong>Done/Undone</strong> — Toggle completion state with a click</li>
+                <li><strong>Multiple Lists</strong> — Sub-profiles for separate lists (shopping, reading, ideas, packing)</li>
+              </ul>
+              <h3>Cross-Service Integration</h3>
+              <ul>
+                <li><strong>Twain Save Bar</strong> — Quickly add list items while writing in the journal focus mode</li>
+                <li><strong>Promote to Task</strong> — Hover action to promote a list item into a full task with urgency scoring</li>
+                <li><strong>Promote to Journal</strong> — Hover action to expand a list item into a journal entry</li>
+              </ul>
+            </div>
+          </div>
           <form class="add-form-inline" id="add-list-item-form">
             <input type="text" name="text" id="list-item-text" placeholder="Add item…" autocomplete="off" style="flex:1;min-width:200px" />
             <button type="submit" class="btn-inline-submit">add</button>
@@ -416,64 +898,123 @@
             <div class="service-panel-body">
               <div id="warrior-totals" style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;margin-bottom:8px;border-bottom:1px solid var(--border)"></div>
               <div id="warrior-profiles"></div>
+              <div style="padding:10px 0;border-top:1px solid var(--border);margin-top:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-size:12px;color:var(--muted)">≋ Stream</span>
+                  <label class="stream-toggle-label">
+                    <input type="checkbox" id="warrior-stream-toggle" />
+                    <span id="warrior-stream-status" style="font-size:11px;color:var(--muted)">off</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         <!-- Community -->
         <section class="section hidden" id="section-community">
-          <div class="service-panel">
-            <div class="service-panel-header">◎ Community — Shared Collections</div>
-            <div class="service-panel-body">
-
-              <!-- Collection picker + create -->
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
-                <select id="community-select" class="resource-select" style="min-width:150px;flex:1"></select>
-                <button class="btn-inline-alt" id="btn-community-archive">archive</button>
-                <button class="btn-inline-alt" id="btn-comm-show-create" style="font-size:11px">+ new</button>
-              </div>
+          <div class="fn-info-panel hidden" id="fn-info-community">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Shared collections for cross-posting and collaboration</span>
+              <button class="fn-info-close" data-fn-info-close="community">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Communities</h3>
+              <p>Communities are <strong>shared collections</strong> where you cross-post tasks, journal entries, and other items for review, discussion, and coordination.</p>
+              <ul>
+                <li><strong>Collections</strong> — Create named collections (e.g., team-updates, code-review)</li>
+                <li><strong>Cross-Post</strong> — Share items from Tasks, Journal, or Ledger into any collection</li>
+                <li><strong>Comments</strong> — Add discussion comments that stay within the community (not synced to source)</li>
+                <li><strong>Annotations</strong> — Annotate source items directly — these propagate back to the original task or journal entry</li>
+                <li><strong>Private Notes</strong> — Local-only notes that never get shared or exported</li>
+                <li><strong>Forensics Panel</strong> — Click any entry to inspect it with full editing: add tags, project, ledger entries, and sync live data from source</li>
+                <li><strong>Sync</strong> — Refresh an entry to pull the latest data from its source without overriding your comments</li>
+              </ul>
+              <h3>Data Model</h3>
+              <p>Community data is stored separately from profiles. Comments and private notes are local to the collection. Only annotations write back to the source item.</p>
+            </div>
+          </div>
+          <div class="comm-layout">
+            <!-- Left: entry list -->
+            <div class="comm-left">
               <form class="add-form-inline hidden" id="community-create-form" style="margin-bottom:10px">
                 <input type="text" name="name" placeholder="collection name (letters, numbers, - _)" autocomplete="off" pattern="[a-zA-Z0-9_-]+" style="width:200px" />
                 <input type="text" name="description" placeholder="description (optional)" autocomplete="off" style="flex:1;min-width:120px" />
                 <button type="submit" class="btn-inline-submit">create</button>
                 <button type="button" class="btn-inline-alt" id="btn-comm-hide-create">cancel</button>
               </form>
-
-              <!-- View tabs + search -->
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
                 <div style="display:flex;gap:4px">
                   <button class="community-tab active" data-view="unified">All</button>
                   <button class="community-tab" data-view="tasks">Tasks</button>
                   <button class="community-tab" data-view="journal">Journal</button>
                 </div>
-                <input type="text" id="comm-search" class="inline-filter" placeholder="search entries…" autocomplete="off" style="flex:1;min-width:140px" />
+                <input type="text" id="comm-search" class="inline-filter" placeholder="search…" autocomplete="off" style="flex:1;min-width:100px" />
               </div>
-
               <div id="community-body"><div class="skeleton-msg">Select or create a collection above.</div></div>
             </div>
+            <!-- Right: detail panel -->
+            <div class="comm-right comm-right-hidden" id="comm-detail-panel"></div>
           </div>
         </section>
 
         <!-- Questions -->
         <section class="section hidden" id="section-questions">
-          <div class="service-panel">
-            <div class="service-panel-header">？Questions — Capture Templates</div>
-            <div class="service-panel-body">
-              <div id="questions-templates"></div>
-              <div id="questions-active-form" class="hidden" style="margin-top:12px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:4px">
-                <div id="questions-form-title" style="font-size:12px;font-weight:bold;margin-bottom:8px;color:var(--accent)"></div>
-                <form id="questions-answer-form"></form>
-                <div style="display:flex;gap:8px;margin-top:8px">
-                  <button class="btn-inline-submit" id="btn-questions-submit">submit</button>
-                  <button class="btn-inline-alt" id="btn-questions-cancel">cancel</button>
-                </div>
-              </div>
+          <div class="fn-info-panel hidden" id="fn-info-questions">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Structured capture templates for recurring workflows</span>
+              <button class="fn-info-close" data-fn-info-close="questions">✕</button>
             </div>
+            <div class="fn-info-body">
+              <h3>Questions</h3>
+              <p>Questions provide <strong>structured capture templates</strong> — predefined forms that guide you through recurring data entry workflows.</p>
+              <ul>
+                <li><strong>Templates</strong> — Define reusable question sets (daily standup, weekly review, client intake, etc.)</li>
+                <li><strong>Multi-Field</strong> — Each template can have multiple fields with different types (text, select, date)</li>
+                <li><strong>Output Routing</strong> — Answers get routed to the appropriate function (tasks, journal, ledger) based on template configuration</li>
+                <li><strong>Consistency</strong> — Ensures you capture the same information each time without forgetting fields</li>
+              </ul>
+              <h3>Use Cases</h3>
+              <p>Daily standups, sprint planning, expense reports, meeting notes, client onboarding — any workflow where you answer the same set of questions repeatedly.</p>
+            </div>
+          </div>
+          <div class="q-layout">
+            <!-- Left: question set list -->
+            <div class="q-left">
+              <div class="q-toolbar">
+                <input type="text" id="q-search" class="inline-filter" placeholder="search questions…" autocomplete="off" style="flex:1" />
+                <button class="btn-toolbar q-sort-btn" id="btn-q-sort-project" title="Sort by project">projects</button>
+                <button class="btn-toolbar q-sort-btn" id="btn-q-sort-tags" title="Sort by tags">tags</button>
+                <button class="btn-inline-alt" id="btn-q-show-archived" title="Show archived">☰</button>
+                <button class="btn-inline-submit" id="btn-q-new" style="font-size:11px;padding:3px 10px">+ NEW</button>
+              </div>
+              <div id="q-list"><div class="skeleton-msg">Loading…</div></div>
+            </div>
+            <!-- Right: detail/run panel -->
+            <div class="q-right q-right-hidden" id="q-detail-panel"></div>
           </div>
         </section>
 
         <!-- Export (expanded) -->
         <section class="section hidden" id="section-export">
+          <div class="fn-info-panel hidden" id="fn-info-export">
+            <div class="fn-info-header">
+              <span class="fn-info-origin">Local file exports — nothing leaves your browser</span>
+              <button class="fn-info-close" data-fn-info-close="export">✕</button>
+            </div>
+            <div class="fn-info-body">
+              <h3>Export</h3>
+              <p>Export your data as <strong>local file downloads</strong>. All processing happens in-browser — no data is sent to any server.</p>
+              <ul>
+                <li><strong>Full JSON</strong> — Complete profile backup including all tasks, time, journal, ledger, and metadata</li>
+                <li><strong>Tasks CSV</strong> — Spreadsheet-compatible export of all tasks with UDA fields</li>
+                <li><strong>Journal Markdown</strong> — Journal entries formatted as a readable Markdown document</li>
+                <li><strong>Hledger File</strong> — Ledger transactions in hledger-compatible plain text accounting format</li>
+              </ul>
+              <h3>Portability</h3>
+              <p>Exports are designed for interoperability with the original CLI tools (Taskwarrior, Timewarrior, jrnl, hledger) and standard formats (CSV, JSON, Markdown).</p>
+            </div>
+          </div>
           <div class="service-panel">
             <div class="service-panel-header">Export</div>
             <div class="service-panel-body" style="padding:10px 0">
@@ -544,6 +1085,187 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Stream -->
+        <section class="section hidden" id="section-stream">
+          <div class="stream-dashboard" id="stream-dashboard">
+            <div class="stream-metrics-bar">
+              <div class="stream-metric"><span class="stream-metric-label">events</span><span class="stream-metric-value" id="stream-metric-events">0</span></div>
+              <div class="stream-metric"><span class="stream-metric-label">log size</span><span class="stream-metric-value" id="stream-metric-size">0 KB</span></div>
+              <div class="stream-metric"><span class="stream-metric-label">session</span><span class="stream-metric-value" id="stream-metric-session">—</span></div>
+              <div class="stream-metric"><span class="stream-metric-label">lens</span><span class="stream-metric-value" id="stream-metric-lens">—</span></div>
+            </div>
+          </div>
+
+          <div class="stream-controls">
+            <div class="stream-controls-left">
+              <select id="stream-lens-select" class="resource-select" title="Active lens">
+                <option value="burroughs">Burroughs (log)</option>
+                <option value="bundy">Bundy (intervals)</option>
+                <option value="frick">Frick (transitions)</option>
+                <option value="felt">Felt (density)</option>
+                <option value="dey">Dey (signal)</option>
+                <option value="cooper">Cooper (field)</option>
+              </select>
+              <select id="stream-time-range" class="resource-select" title="Time range">
+                <option value="session">this session</option>
+                <option value="today">today</option>
+                <option value="week">this week</option>
+                <option value="all">all time</option>
+                <option value="custom">custom range…</option>
+              </select>
+            </div>
+            <div class="stream-controls-right">
+              <button class="btn-toolbar" id="btn-stream-compare" title="Compare time ranges">compare</button>
+              <button class="btn-toolbar" id="btn-stream-filter" title="Filter">filter</button>
+              <button class="btn-toolbar" id="btn-stream-ascii" title="Toggle ASCII mode">ascii</button>
+              <button class="btn-toolbar" id="btn-stream-export" title="Export stream">export</button>
+              <button class="btn-toolbar" id="btn-stream-config" title="Stream settings">config</button>
+            </div>
+          </div>
+
+          <div class="stream-compare-bar hidden" id="stream-compare-bar">
+            <label class="stream-filter-label">compare with</label>
+            <select id="stream-compare-range" class="resource-select">
+              <option value="yesterday">yesterday</option>
+              <option value="last-week">same day last week</option>
+              <option value="custom">custom range</option>
+            </select>
+            <button class="btn-toolbar" id="btn-stream-compare-close">✕ close</button>
+          </div>
+
+          <div class="stream-custom-range hidden" id="stream-custom-range">
+            <input type="date" id="stream-date-from" class="resource-select" />
+            <span style="color:var(--muted)">to</span>
+            <input type="date" id="stream-date-to" class="resource-select" />
+            <button class="btn-toolbar" id="btn-stream-custom-apply">apply</button>
+          </div>
+
+          <!-- Filter panel (hidden by default) -->
+          <div class="stream-filter-panel hidden" id="stream-filter-panel">
+            <div class="stream-filter-row">
+              <label class="stream-filter-label">service</label>
+              <select id="stream-filter-service" class="resource-select">
+                <option value="">all</option>
+                <option value="task">tasks</option>
+                <option value="timew">time</option>
+                <option value="jrnl">journal</option>
+                <option value="ldgr">ledger</option>
+                <option value="list">lists</option>
+                <option value="comm">community</option>
+                <option value="questions">questions</option>
+                <option value="attr">attributes</option>
+              </select>
+              <label class="stream-filter-label">project</label>
+              <input type="text" id="stream-filter-project" class="inline-filter" placeholder="project…" style="width:120px" />
+              <label class="stream-filter-label">tags</label>
+              <input type="text" id="stream-filter-tags" class="inline-filter" placeholder="tags…" style="width:120px" />
+            </div>
+            <div class="stream-filter-row">
+              <button class="btn-toolbar" id="btn-stream-filter-apply">apply</button>
+              <button class="btn-toolbar" id="btn-stream-filter-clear">clear</button>
+              <button class="btn-toolbar" id="btn-stream-filter-save">save filter</button>
+            </div>
+          </div>
+
+          <!-- Two-column lens display -->
+          <div class="stream-panel-body" id="stream-panel-body">
+            <div class="stream-col stream-col-primary" id="stream-col-primary">
+              <div class="stream-lens-view" id="stream-lens-view">
+                <div class="skeleton-msg">Select a lens and time range to view stream data.</div>
+              </div>
+            </div>
+            <div class="stream-col stream-col-secondary hidden" id="stream-col-secondary">
+              <div class="stream-regen-card" id="stream-regen-card">
+                <div class="stream-regen-header">Regeneration</div>
+                <div class="stream-regen-body" id="stream-regen-body">
+                  <div class="stream-regen-metric"><span>fatigue</span><span id="regen-fatigue">—</span></div>
+                  <div class="stream-regen-metric"><span>elasticity</span><span id="regen-elasticity">—</span></div>
+                  <div class="stream-regen-metric"><span>crystallization</span><span id="regen-crystal">—</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Config panel (hidden by default) -->
+          <div class="stream-config-panel hidden" id="stream-config-panel">
+            <div class="service-panel-header">Stream Configuration</div>
+            <div class="stream-config-body">
+              <div class="stream-config-row">
+                <label>Snapshot interval (events)</label>
+                <input type="number" id="cfg-snapshot-events" value="1000" min="100" max="10000" />
+              </div>
+              <div class="stream-config-row">
+                <label>Snapshot interval (minutes)</label>
+                <input type="number" id="cfg-snapshot-minutes" value="30" min="5" max="120" />
+              </div>
+              <div class="stream-config-row">
+                <label>Dey sampling interval (seconds)</label>
+                <input type="number" id="cfg-dey-interval" value="60" min="10" max="600" />
+              </div>
+              <div class="stream-config-row">
+                <label>Gap threshold (seconds)</label>
+                <input type="number" id="cfg-gap-threshold" value="300" min="60" max="3600" />
+              </div>
+              <div class="stream-config-row">
+                <label>Zero-activity mode</label>
+                <select id="cfg-zero-mode">
+                  <option value="suppress">suppress (no samples during gaps)</option>
+                  <option value="decay">decay (decreasing signal)</option>
+                  <option value="threshold-silent">threshold then silent</option>
+                </select>
+              </div>
+              <div class="stream-config-row">
+                <button class="btn-inline-submit" id="btn-stream-config-save">save config</button>
+                <button class="btn-inline-alt" id="btn-stream-archive">archive data &gt; 90 days</button>
+                <button class="btn-inline-alt" id="btn-stream-reset" style="color:var(--error)">reset stream</button>
+              </div>
+              <div class="stream-config-row">
+                <button class="btn-inline-alt" id="btn-stream-verify" title="Verify log integrity">verify &amp; repair</button>
+                <span id="stream-verify-result" style="font-size:11px;color:var(--muted)"></span>
+              </div>
+              <div class="stream-config-row">
+                <button class="btn-inline-alt" id="btn-stream-backup" title="Save stream to file">backup to file</button>
+              </div>
+              <div class="stream-config-row" style="margin-top:10px">
+                <button class="btn-toolbar" id="btn-stream-dey-config-toggle">&#9656; Dey Signal Configuration</button>
+              </div>
+              <div class="stream-dey-config hidden" id="stream-dey-config">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:8px">Adjust how each source contributes to intensity (i), stability (s), and fragmentation (f). Range: -1 to +1.</div>
+                <div id="dey-weights-grid" style="display:grid;grid-template-columns:120px 60px 60px 60px;gap:4px;font-size:11px;align-items:center">
+                  <span style="color:var(--muted)">source</span><span style="color:#3fb950">i</span><span style="color:#58a6ff">s</span><span style="color:#d29922">f</span>
+                </div>
+                <div class="stream-config-row" style="margin-top:8px">
+                  <button class="btn-inline-submit" id="btn-dey-weights-save">save weights</button>
+                  <button class="btn-inline-alt" id="btn-dey-weights-reset">reset to defaults</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bridge -->
+        <section class="section hidden" id="section-bridge">
+          <div class="section-body" style="padding:12px;">
+            <h3 style="margin:0 0 12px;font-size:14px;">Works Bridge</h3>
+            
+            <div class="bridge-status-card" style="border:1px solid var(--border);padding:10px;border-radius:4px;margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:12px;color:var(--muted);">Bridge Status</span>
+                <span id="bridge-status-indicator" style="font-size:12px;">Inactive</span>
+              </div>
+            </div>
+            
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+              <button class="btn-sm" id="btn-bridge-toggle">Enable Bridge</button>
+              <button class="btn-sm" id="btn-bridge-test">Test Connection</button>
+            </div>
+            
+            <div id="bridge-log" style="font-size:11px;color:var(--muted);max-height:200px;overflow-y:auto;">
+              <p>Bridge connects this WebWarrior instance to the Works Compound Browser running in another tab.</p>
             </div>
           </div>
         </section>
@@ -633,7 +1355,7 @@
         <div class="tdr-fields">
           <div class="tdr-field-row"><label class="tdr-label">description</label><input class="tdr-input" id="tdr-desc" type="text" autocomplete="off"></div>
           <div class="tdr-field-row"><label class="tdr-label">list</label><select class="tdr-input tdr-select" id="tdr-task-list"></select></div>
-          <div class="tdr-field-row"><label class="tdr-label">project</label><input class="tdr-input" id="tdr-proj" type="text" autocomplete="off"></div>
+          <div class="tdr-field-row"><label class="tdr-label">project</label><input class="tdr-input" id="tdr-proj" type="text" autocomplete="off" list="tdr-project-datalist"><datalist id="tdr-project-datalist"></datalist></div>
           <div class="tdr-field-row"><label class="tdr-label">priority</label>
             <select class="tdr-input tdr-select" id="tdr-pri">
               <option value="">—</option><option value="H">H</option><option value="M">M</option><option value="L">L</option>
@@ -649,21 +1371,32 @@
         </div>
 
         <!-- UDAs -->
-        <div class="tdr-section-header">UDAS</div>
-        <div id="tdr-uda-list"></div>
-        <div class="tdr-uda-add-row">
-          <input class="tdr-input tdr-uda-key-input" id="tdr-uda-key" type="text" placeholder="add UDA (type to search…)" list="tdr-uda-datalist" autocomplete="off">
-          <datalist id="tdr-uda-datalist"></datalist>
-          <input class="tdr-input tdr-uda-val-input" id="tdr-uda-val" type="text" placeholder="value">
-          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-add-uda">+ UDA</button>
+        <div class="tdr-section-toggle" id="tdr-uda-toggle">
+          <span class="tdr-section-caret" id="tdr-uda-caret">▾</span>
+          <div class="tdr-section-header">ATTRIBUTES</div>
+        </div>
+        <div class="tdr-section-body" id="tdr-uda-body">
+          <div id="tdr-uda-list"></div>
+          <div class="tdr-uda-add-row">
+            <input class="tdr-input tdr-uda-key-input" id="tdr-uda-key" type="text" placeholder="add attribute (type to search…)" list="tdr-uda-datalist" autocomplete="off">
+            <datalist id="tdr-uda-datalist"></datalist>
+            <input class="tdr-input tdr-uda-val-input" id="tdr-uda-val" type="text" placeholder="value">
+            <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-add-uda">+ add</button>
+          </div>
         </div>
         <button class="btn-inline-submit" id="btn-tdr-save" style="margin:10px 0 14px">save</button>
 
         <!-- Annotations -->
-        <div id="tdr-annotations"></div>
-        <div class="tdr-ann-add-row">
-          <input class="tdr-input" id="tdr-ann-text" type="text" placeholder="add annotation…" style="flex:1">
-          <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-annotate">annotate</button>
+        <div class="tdr-section-toggle" id="tdr-ann-toggle">
+          <span class="tdr-section-caret" id="tdr-ann-caret">▾</span>
+          <div class="tdr-section-header" style="border-top:none;margin-top:0">ANNOTATIONS</div>
+        </div>
+        <div class="tdr-section-body" id="tdr-ann-body">
+          <div id="tdr-annotations"></div>
+          <div class="tdr-ann-add-row">
+            <input class="tdr-input" id="tdr-ann-text" type="text" placeholder="add annotation…" style="flex:1">
+            <button class="btn-inline-submit tdr-btn-sm" id="btn-tdr-annotate">annotate</button>
+          </div>
         </div>
 
         <!-- Note to journal -->
@@ -809,6 +1542,18 @@
           <select class="tdr-input tdr-select tdr-journal-sel" id="ldr-journal-select"></select>
           <button class="btn-inline-submit tdr-btn-sm" id="btn-ldr-to-journal">→ journal</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome overlay -->
+  <div id="ww-welcome-overlay" class="ww-welcome-overlay hidden">
+    <div class="ww-welcome-card">
+      <div class="ww-welcome-title">Welcome to Webwarrior</div>
+      <div class="ww-welcome-desc">A browser-native productivity system. All data stays on your device.</div>
+      <div class="ww-welcome-actions">
+        <button class="btn-inline-submit" id="btn-welcome-demo">View Demo</button>
+        <button class="btn-inline-alt" id="btn-welcome-start">Start Fresh</button>
       </div>
     </div>
   </div>

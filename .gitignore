@@ -1,0 +1,22 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Dependencies (none used, but just in case)
+node_modules/
+
+# Reference/comparison folders (not part of the app)
+main webwarrior/
+
+# Kiro specs (development only)
+.kiro/
+
+# Logs
+*.log

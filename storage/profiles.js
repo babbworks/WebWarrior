@@ -152,3 +152,21 @@ export async function addUdaKey(profile, key) {
     await setMeta(profile, 'uda_keys', keys);
   }
 }
+
+export async function getQuestionLists(profile) {
+  return (await getMeta(profile, 'question_lists')) || ['default'];
+}
+
+export async function addQuestionList(profile, name) {
+  const lists = await getQuestionLists(profile);
+  if (!lists.includes(name)) {
+    lists.push(name);
+    await setMeta(profile, 'question_lists', lists);
+  }
+}
+
+export async function removeQuestionList(profile, name) {
+  if (name === 'default') throw new Error('Cannot remove the default question list');
+  const lists = (await getQuestionLists(profile)).filter(l => l !== name);
+  await setMeta(profile, 'question_lists', lists.length ? lists : ['default']);
+}
