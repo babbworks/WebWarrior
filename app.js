@@ -15,6 +15,8 @@ import * as Export    from './services/export/index.js';
 import * as _Attributes from './services/attributes/index.js';
 import * as Render    from './ui/render.js';
 import { Terminal }   from './ui/terminal.js';
+import { wireSearch } from './ui/search.js';
+import { getSearchRecord } from './services/search/index.js';
 import { showToast, confirm, promptText } from './ui/modals.js';
 import { importFromFolder, loadDemoData } from './storage/import.js';
 import * as Stream    from './services/stream/index.js';
@@ -69,6 +71,7 @@ let tagsSort      = 'name';
 let functionsLocked = false;
 
 const scrollPositions = new Map();
+let refreshSearchProfiles;
 
 const terminal = new Terminal({
   onNavigate: (section) => showSection(section),
@@ -86,6 +89,7 @@ async function boot() {
   initBroadcastChannel();
   updateHeader();
   wireSidebar();
+  refreshSearchProfiles = wireSearch(openSearchResult);
   wireProfileSwitcher();
   wireTaskDrawer();
   wireJournalDrawer();
@@ -172,6 +176,7 @@ const SECTION_TITLES = {
   community: 'Communities',
   questions: 'Questions',
   projects:  'Projects',
+  search:    'Search',
   stream:    'Stream',
   bridge:    'Bridge',
   viz:       'Viz',
@@ -207,7 +212,7 @@ function syncThemeModeSelectToRiver() {
   sel.value = document.body.classList.contains('river-mode') ? 'river' : '';
 }
 
-async function showSection(name, { noScroll = false } = {}) {
+async function showSection(name, { noScroll = false, syncResources = true } = {}) {
   if (scrollPositions.has(activeSection)) {
     const area = document.getElementById('content-area');
     if (area) scrollPositions.set(activeSection, area.scrollTop);
@@ -261,7 +266,7 @@ async function showSection(name, { noScroll = false } = {}) {
   }
 
   // Auto-sync sub-lists when not locked
-  if (!functionsLocked && !noScroll) {
+  if (syncResources && !functionsLocked && !noScroll) {
     const syncName = activeTaskList !== 'main' ? activeTaskList : (activeTimeLog !== 'main' ? activeTimeLog : activeJournal);
     if (syncName && syncName !== 'main') {
       if (name === 'tasks') activeTaskList = syncName;
@@ -275,6 +280,7 @@ async function showSection(name, { noScroll = false } = {}) {
 
 async function loadSection(name) {
   switch (name) {
+    case 'search':    return refreshSearchProfiles?.();
     case 'tasks':     return loadTasks();
     case 'time':      return loadTime();
     case 'journal':   return loadJournal();
@@ -812,10 +818,10 @@ let _drawerUuid = null;
 let _drawerTask = null;
 let _allTasksCache = [];
 
-async function openTaskDrawer(uuid) {
+async function openTaskDrawer(uuid, record = null) {
   if (!uuid) return;
   _drawerUuid = uuid;
-  _drawerTask  = await Tasks.getTask(activeProfile, uuid);
+  _drawerTask  = record || await Tasks.getTask(activeProfile, uuid);
   if (!_drawerTask) return;
 
   _allTasksCache = await Tasks.getTasks(activeProfile, { includeDone: false });
@@ -826,7 +832,7 @@ async function openTaskDrawer(uuid) {
 
   // Mark row as open
   document.querySelectorAll('.task-row.drawer-open').forEach(r => r.classList.remove('drawer-open'));
-  document.querySelector(`.task-row[data-uuid="${uuid}"]`)?.classList.add('drawer-open');
+  document.querySelector(`.task-row[data-uuid="${CSS.escape(uuid)}"]`)?.classList.add('drawer-open');
 
   populateDrawer(_drawerTask);
 }
@@ -1612,9 +1618,8 @@ async function handleTimePanelAction(btn) {
 let _tmrId       = null;
 let _tmrInterval = null;
 
-async function openTimeDrawer(id) {
-  const intervals = await Time.getIntervals(activeProfile, { limit: 10000 });
-  _tmrInterval = intervals.find(i => i.id === id);
+async function openTimeDrawer(id, record = null) {
+  _tmrInterval = record || (await Time.getIntervals(activeProfile, { limit: 10000 })).find(i => i.id === id);
   if (!_tmrInterval) return;
   _tmrId = id;
   document.getElementById('time-drawer').classList.remove('hidden');
@@ -2588,9 +2593,8 @@ async function handleJournalPanelAction(btn) {
 let _jdrId   = null;
 let _jdrEntry = null;
 
-async function openJournalDrawer(id) {
-  const all = await Journal.getEntries(activeProfile, { showArchived: true, limit: 10000 });
-  _jdrEntry = all.find(e => e.id === id);
+async function openJournalDrawer(id, record = null) {
+  _jdrEntry = record || (await Journal.getEntries(activeProfile, { showArchived: true, limit: 10000 })).find(e => e.id === id);
   if (!_jdrEntry) return;
   _jdrId = id;
 
@@ -3045,9 +3049,8 @@ async function handleLedgerPanelAction(btn) {
 let _ldrId  = null;
 let _ldrTxn = null;
 
-async function openLedgerDrawer(id) {
-  const txns = await Ledger.getTransactions(activeProfile, { limit: 10000 });
-  _ldrTxn = txns.find(t => t.id === id);
+async function openLedgerDrawer(id, record = null) {
+  _ldrTxn = record || (await Ledger.getTransactions(activeProfile, { limit: 10000 })).find(t => t.id === id);
   if (!_ldrTxn) return;
   _ldrId = id;
   document.getElementById('ledger-drawer').classList.remove('hidden');
@@ -4443,6 +4446,54 @@ function wireWelcome() {
     document.getElementById('ww-welcome-overlay')?.classList.add('hidden');
     localStorage.setItem('ww_welcome_dismissed', '1');
   });
+}
+
+// ── Cross-profile search ──────────────────────────────────────────────────────
+
+async function openSearchResult(result) {
+  try {
+    if (!listProfiles().includes(result.profile)) {
+      showToast('This profile is no longer available.');
+      return;
+    }
+    const record = await getSearchRecord(result);
+    if (!record) {
+      showToast('This record is no longer available. Run your search again.');
+      return;
+    }
+    if (activeProfile !== result.profile) await switchProfile(result.profile);
+
+    switch (result.type) {
+      case 'tasks': activeTaskList = record.taskList || 'main'; break;
+      case 'time': activeTimeLog = record.log || 'main'; break;
+      case 'journal': activeJournal = record.journal || 'main'; break;
+      case 'ledger': activeLedger = record.ledger || 'main'; break;
+      case 'lists':
+        activeList = record.list || 'default';
+        listShowDone = Boolean(record.done) || listShowDone;
+        listFilterText = '';
+        document.getElementById('list-filter').value = '';
+        document.getElementById('btn-list-show-done').classList.toggle('active', listShowDone);
+        break;
+    }
+
+    await showSection(result.type, { syncResources: false });
+    switch (result.type) {
+      case 'tasks': return await openTaskDrawer(result.id, record);
+      case 'time': return await openTimeDrawer(result.id, record);
+      case 'journal': return await openJournalDrawer(result.id, record);
+      case 'ledger': return await openLedgerDrawer(result.id, record);
+      case 'lists': {
+        const item = document.querySelector(`[data-list-id="${CSS.escape(String(result.id))}"]`);
+        item?.scrollIntoView({ block: 'center' });
+        item?.querySelector('button')?.focus({ preventScroll: true });
+        break;
+      }
+    }
+  } catch (error) {
+    showToast('Could not open this search result.');
+    console.error('[Search]', error);
+  }
 }
 
 // ── Terminal commands ─────────────────────────────────────────────────────────

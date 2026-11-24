@@ -7,6 +7,7 @@ const SECTION_KEYS = {
   l: 'ledger',
   p: 'projects',
   x: 'tags',
+  f: 'search',
   e: 'export',
   m: 'import',
   c: 'ctrl',

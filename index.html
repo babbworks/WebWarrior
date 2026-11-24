@@ -59,6 +59,7 @@
         <button class="nav-item" data-section="lists"><span class="nav-icon">•</span><span class="nav-label">Lists</span></button>
         <button class="nav-item" data-section="attributes"><span class="nav-icon">⊕</span><span class="nav-label">Atts</span></button>
         <div class="nav-divider"></div>
+        <button class="nav-item" data-section="search"><span class="nav-icon" aria-hidden="true">⌕</span><span class="nav-label">Search</span></button>
         <button class="nav-item" data-section="projects"><span class="nav-icon">◆</span><span class="nav-label">Projects</span></button>
         <button class="nav-item" data-section="tags"><span class="nav-icon">⌗</span><span class="nav-label">Tags</span></button>
         <button class="nav-item" data-section="viz"><span class="nav-icon">◫</span><span class="nav-label">Viz</span></button>
@@ -809,6 +810,22 @@ reviewby,Review By,date,,,2.0,false,Dates</pre>
         </section>
 
         <!-- Projects -->
+        <section class="section hidden" id="section-search">
+          <form id="workspace-search-form" class="workspace-search-form" role="search" aria-label="Cross-profile search">
+            <label>Search records<input class="inline-filter" name="query" type="search" placeholder="Search text, tags, or accounts" autocomplete="off"></label>
+            <label>Profile<select class="inline-filter" name="profile"></select></label>
+            <label>Type<select class="inline-filter" name="type">
+              <option value="">All types</option>
+              <option value="tasks">Tasks</option><option value="time">Time</option>
+              <option value="journal">Journals</option><option value="ledger">Ledgers</option>
+              <option value="lists">Lists</option>
+            </select></label>
+            <button class="btn-inline-submit" type="submit">Search</button>
+          </form>
+          <p id="workspace-search-status" class="workspace-search-status" role="status"></p>
+          <ul id="workspace-search-results" class="workspace-search-results"></ul>
+        </section>
+
         <section class="section hidden" id="section-projects">
           <div class="fn-info-panel hidden" id="fn-info-projects">
             <div class="fn-info-header">
@@ -1078,7 +1095,7 @@ reviewby,Review By,date,,,2.0,false,Dates</pre>
                   <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Keyboard shortcuts</div>
                   <div style="font-size:11px;line-height:2;color:var(--text)">
                     <code>g t</code> Tasks &nbsp; <code>g i</code> Times &nbsp; <code>g j</code> Journals &nbsp; <code>g l</code> Ledger<br>
-                    <code>g p</code> Projects &nbsp; <code>g x</code> Tags &nbsp; <code>g e</code> Export<br>
+                    <code>g f</code> Search &nbsp; <code>g p</code> Projects &nbsp; <code>g x</code> Tags &nbsp; <code>g e</code> Export<br>
                     <code>Esc</code> Focus terminal &nbsp; <code>Tab</code> Filter mode<br>
                     <code>t &lt;desc&gt;</code> Quick task &nbsp; <code>j &lt;text&gt;</code> Quick journal<br>
                     <code>start &lt;tags&gt;</code> Start tracking &nbsp; <code>stop</code> Stop tracking

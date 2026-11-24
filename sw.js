@@ -1,7 +1,7 @@
 // Service Worker — offline-first static asset caching
 // Cache name is versioned; bump CACHE_VERSION on deploy to force update.
 
-const CACHE_VERSION = 'ww-v66';
+const CACHE_VERSION = 'ww-v67';
 
 const STATIC_ASSETS = [
   './',
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   './services/journal/index.js',
   './services/ledger/index.js',
   './services/lists/index.js',
+  './services/search/index.js',
   './services/next/index.js',
   './services/warrior/index.js',
   './services/questions/index.js',
@@ -27,6 +28,7 @@ const STATIC_ASSETS = [
   './storage/profiles.js',
   './storage/import.js',
   './ui/terminal.js',
+  './ui/search.js',
   './ui/render.js',
   './ui/modals.js',
 ];
